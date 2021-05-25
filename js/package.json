@@ -1,0 +1,16 @@
+{
+  "name": "recos",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@babel/parser": "^7.14.2",
+    "@babel/plugin-syntax-jsx": "^7.12.13",
+    "getopts": "^2.3.0"
+  }
+}
