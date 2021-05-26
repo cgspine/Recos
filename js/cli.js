@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+// node cli.js -s ./test/hello.tsx -o ./test/hello.bundle
+
 const fs = require('fs')
 const getopts = require('getopts')
 const babelParser = require('@babel/parser')
@@ -32,7 +34,7 @@ let sourceContent = babelParser.parse(content, {
     ]
 })
 let ret = parse(sourceContent.program.body)
-// console.log(JSON.stringify(sourceContent.program.body))
+console.log(JSON.stringify(sourceContent.program.body))
 fs.writeFileSync(output, JSON.stringify(ret))
 
 function parse(input){
@@ -51,7 +53,11 @@ function parse(input){
         let ret = Array(input.declarations.length)
         for(let i = 0; i < ret.length; i++){
             let decl = input.declarations[i]
-            ret[i] = node.createVarDecl(decl.id.name, input.kind, parse(decl.init))
+            if(decl.id.type === 'Identifier'){
+                ret[i] = node.createVarDecl(decl.id.name, input.kind, parse(decl.init))
+            }else if(decl.id.type === 'ArrayPattern'){
+                ret[i] = node.createVarArrayPatternDecl(decl.id.elements.map(item => item.name), input.kind, parse(decl.init))
+            }
         }
         return node.createVarListDecl(ret)
     }else if(input.type === 'ArrayExpression'){

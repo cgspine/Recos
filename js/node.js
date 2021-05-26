@@ -1,6 +1,7 @@
 const TYPE_DECL_FUNC = 10
 const TYPE_DECL_VAR = 11
 const TYPE_DECL_VAR_LIST = 12
+const TYPE_DECL_VAR_ARRAY_PATTERN = 13
 
 
 const TYPE_EXPR_ARRAY = 100
@@ -52,6 +53,17 @@ exports.createVarListDecl = function (list){
     return {
         type: TYPE_DECL_VAR_LIST,
         content: list
+    }
+}
+
+exports.createVarArrayPatternDecl = function (nameList, kind, init){
+    return {
+        type: TYPE_DECL_VAR_ARRAY_PATTERN,
+        content: {
+            nameList,
+            kind,
+            init
+        }
     }
 }
 

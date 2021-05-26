@@ -7,6 +7,7 @@ import kotlinx.serialization.json.JsonElement
 const val TYPE_DECL_FUNC = 10
 const val TYPE_DECL_VAR = 11
 const val TYPE_DECL_VAR_LIST = 12
+const val TYPE_DECL_VAR_ARRAY_PATTERN = 13
 
 
 const val TYPE_EXPR_ARRAY = 100
@@ -73,6 +74,16 @@ data class FunctionExpr(
 data class ValDecl(
     @Serializable
     val name: String,
+    @Serializable
+    val kind: String,
+    @Serializable
+    val init: Node? = null
+)
+
+@Serializable
+data class ArrayPatternValDecl(
+    @Serializable
+    val nameList: List<String>,
     @Serializable
     val kind: String,
     @Serializable
