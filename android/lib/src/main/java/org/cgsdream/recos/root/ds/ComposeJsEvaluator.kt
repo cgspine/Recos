@@ -9,6 +9,9 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromJsonElement
 import java.lang.StringBuilder
@@ -16,7 +19,7 @@ import java.util.Stack
 import kotlin.collections.HashMap
 
 private const val TAG = "ComposeJsEvaluator"
-class JsEvaluator {
+class JsEvaluator(val dataSource: RecosDataSource) {
     internal val stack = Stack<StackFrame>()
     private val rootScope = Scope(null)
 
@@ -24,6 +27,7 @@ class JsEvaluator {
     fun normalEval(
         functionDecl: FunctionDecl,
         parentScope: Scope? = null,
+        self: Any? = null,
         args: List<Pair<String, Any?>>? = null
     ) {
         val start = SystemClock.elapsedRealtime()
@@ -32,6 +36,7 @@ class JsEvaluator {
         args?.forEach {
             frame.scope.setVar(it.first, it.second)
         }
+        frame.scope.setVar("this", self)
         stack.push(frame)
         val body = functionDecl.body
         normalExel(node = body, scope = frame.scope)
@@ -62,9 +67,8 @@ class JsEvaluator {
             TYPE_STATEMENT_BLOCK -> {
                 // TODO block scope to support let/var
                 val content = Json.decodeFromJsonElement<List<Node>>(node.content)
-                val blockScope = Scope(scope)
                 content.forEach {
-                    normalExel(node = it, scope = blockScope)
+                    normalExel(node = it, scope = scope)
                 }
             }
             TYPE_STATEMENT_FOR -> {
@@ -97,6 +101,9 @@ class JsEvaluator {
             TYPE_STATEMENT_EXPR -> {
                 parseExprValue(Json.decodeFromJsonElement(node.content), scope)
             }
+            else -> {
+                throw RuntimeException("Not impl.")
+            }
         }
     }
 
@@ -110,9 +117,19 @@ class JsEvaluator {
         val state = remember {
             mutableStateOf(arrayListOf<Any?>(), neverEqualPolicy())
         }
-        ExecWithState(functionDecl, parentScope ?: rootScope, args, state.value){
-            state.value = it
+        val callback = remember {
+            mutableStateOf(arrayListOf<Function>(), structuralEqualityPolicy())
         }
+        val effect = remember {
+            mutableStateOf(arrayListOf<JsEffect>(), structuralEqualityPolicy())
+        }
+        ExecWithState(functionDecl, parentScope ?: rootScope, args, state.value,
+            {
+                state.value = it
+            },
+            callback.value,
+            effect.value
+        )
         Log.i(TAG, "eval ${functionDecl.name} duration = ${SystemClock.elapsedRealtime() - start}")
     }
 
@@ -121,24 +138,56 @@ class JsEvaluator {
                               parentScope: Scope,
                               args: List<Pair<String, Any?>>? = null,
                               state: ArrayList<Any?>,
-                              updateState: (ArrayList<Any?>) -> Unit
+                              updateState: (ArrayList<Any?>) -> Unit,
+                              callback: ArrayList<Function>,
+                              effectList: ArrayList<JsEffect>
     ){
-        var currentIndex = -1
+        var currentStateIndex = -1
+        var currentCallbackIndex = -1
+        var currentEffectIndex = -1
         val lastFrame = stack.lastOrNull()
-        val frame = StackFrame(parentScope ?: rootScope, lastFrame)
+        val frame = StackFrame(parentScope, lastFrame)
         frame.scope.visitAndGetState = { defaultValue ->
-            currentIndex++
-            if(state.size > currentIndex){
-                currentIndex to state[currentIndex]
+            currentStateIndex++
+            if(state.size > currentStateIndex){
+                currentStateIndex to state[currentStateIndex]
             }else{
                 state.add(defaultValue)
-                currentIndex to defaultValue
+                currentStateIndex to defaultValue
             }
         }
         frame.scope.updateState = { index, value ->
-            state[index] = value
-            updateState(state)
+            // TODO support muti thread.
+            GlobalScope.launch(Dispatchers.Main) {
+                state[index] = value
+                updateState(state)
+            }
         }
+
+        frame.scope.visitAndGetCallback = { defaultValue ->
+            currentCallbackIndex++
+            if(callback.size > currentCallbackIndex){
+                callback[currentCallbackIndex]
+            }else{
+                callback.add(defaultValue)
+                defaultValue
+            }
+        }
+
+        frame.scope.checkAndRunEffect = {defaultValue, deps ->
+            currentEffectIndex++
+            if(effectList.size > currentEffectIndex){
+                val effect = effectList[currentEffectIndex]
+                if(effect.lastValueList != deps){
+                    effectList[currentEffectIndex] = JsEffect(defaultValue, deps)
+                    normalEval(defaultValue.toFunctionDecl(), frame.scope)
+                }
+            }else{
+                effectList.add(JsEffect(defaultValue, deps))
+                normalEval(defaultValue.toFunctionDecl(), frame.scope)
+            }
+        }
+
         args?.forEach {
             frame.scope.setVar(it.first, it.second)
         }
@@ -171,9 +220,8 @@ class JsEvaluator {
             TYPE_STATEMENT_BLOCK -> {
                 // TODO block scope to support let/var
                 val content = Json.decodeFromJsonElement<List<Node>>(node.content)
-                val blockScope = Scope(scope)
                 content.forEach {
-                    Exec(node = it, scope = blockScope)
+                    Exec(node = it, scope = scope)
                 }
             }
             TYPE_STATEMENT_FOR -> {
@@ -200,8 +248,26 @@ class JsEvaluator {
                 }
             }
             TYPE_STATEMENT_RETURN -> {
+                // TODO not use jsx???, use special function?
+                // TODO normal return value.
                 val arg = Json.decodeFromJsonElement<Node>(node.content)
-                Exec(node = arg, scope = scope)
+                if(arg.type == TYPE_JSX_ELEMENT){
+                    Exec(node = arg, scope = scope)
+                }else if(arg.type == TYPE_EXPR_CALL){
+                    val callExpr = Json.decodeFromJsonElement<CallExpr>(arg.content)
+                    val memberFunc = parseExprValue(callExpr.callee, scope)
+                    if(memberFunc is Function){
+                        val functionDecl = memberFunc.toFunctionDecl()
+                        val args =functionDecl.param?.mapIndexed { i, p ->
+                            val name = Json.decodeFromJsonElement<IdInfo>(p.content).name
+                            val value = parseExprValue(callExpr.arguments[i], scope)
+                            name to value
+                        }
+                        Eval(functionDecl, scope, args)
+                    }
+                }else{
+                    Exec(node = arg, scope = scope)
+                }
             }
             TYPE_JSX_ELEMENT -> {
                 val jsxEl = Json.decodeFromJsonElement<JsxElement>(node.content)
@@ -216,7 +282,7 @@ class JsEvaluator {
                             // TODO key
                             it
                         }, itemContent = { index ->
-                            (props["render"] as? FunctionExpr)?.toFunctionDecl()?.let { child ->
+                            (props["render"] as? Function)?.toFunctionDecl()?.let { child ->
                                 val args = child.param?.mapNotNull {
                                     if (it.type != TYPE_EXPR_ID) {
                                         null
@@ -239,7 +305,7 @@ class JsEvaluator {
                         }
                     }
                     var modifier: Modifier = Modifier.padding(10.dp)
-                    (props["onClick"] as? FunctionExpr)?.toFunctionDecl()?.let { func ->
+                    (props["onClick"] as? Function)?.toFunctionDecl()?.let { func ->
                         modifier = modifier.clickable {
                             normalEval(func, scope)
                         }
@@ -257,96 +323,149 @@ class JsEvaluator {
         }
     }
 
-    private fun parseExprValue(value: Node?, scope: Scope): Any? {
+    private fun parseExprValue(value: Node?, scope: Scope, leftValue: Boolean = false): Any? {
         if (value == null) {
             return null
         }
-        if (value.type == TYPE_LITERAL_STR) {
-            return Json.decodeFromJsonElement<StringLiteral>(value.content).value
-        } else if (value.type == TYPE_LITERAL_NUM) {
-            return Json.decodeFromJsonElement<NumLiteral>(value.content).value
-        } else if (value.type == TYPE_EXPR_FUNCTION) {
-            return Json.decodeFromJsonElement<FunctionExpr>(value.content)
-        } else if (value.type == TYPE_EXPR_ARRAY) {
-            val ret = JsArray()
-            Json.decodeFromJsonElement<List<Node>>(value.content).map {
-                ret.push(parseExprValue(it, scope))
+        when (value.type) {
+            TYPE_LITERAL_STR -> {
+                return Json.decodeFromJsonElement<StringLiteral>(value.content).value
             }
-            return ret
-        } else if (value.type == TYPE_EXPR_BINARY) {
-            return binaryCalculate(scope, Json.decodeFromJsonElement(value.content))
-        } else if (value.type == TYPE_EXPR_ID) {
-            val name = Json.decodeFromJsonElement<IdInfo>(value.content).name
-            if(name == "useState"){
-                return object: NativeMemberInvoker {
-                    override fun call(args: List<Any?>?): Any? {
-                        val stateValue = scope.visitAndGetState!!(args!![0])
-                        val index = stateValue.first
-                        return JsArray().apply {
-                            push(stateValue.second)
-                            push(object: NativeMemberInvoker {
-                                override fun call(args: List<Any?>?): Any? {
-                                    scope.updateState!!(index, args!![0])
-                                    return null
+            TYPE_LITERAL_NUM -> {
+                return Json.decodeFromJsonElement<NumLiteral>(value.content).value
+            }
+            TYPE_EXPR_FUNCTION -> {
+                return Json.decodeFromJsonElement<FunctionExpr>(value.content)
+            }
+            TYPE_EXPR_ARRAY_FUNCTION -> {
+                return Json.decodeFromJsonElement<FunctionArrayExpr>(value.content)
+            }
+            TYPE_EXPR_ARRAY -> {
+                val ret = JsArray()
+                Json.decodeFromJsonElement<List<Node>>(value.content).map {
+                    ret.push(parseExprValue(it, scope))
+                }
+                return ret
+            }
+            TYPE_EXPR_BINARY -> {
+                return binaryCalculate(scope, Json.decodeFromJsonElement(value.content))
+            }
+            TYPE_EXPR_ID -> {
+                return when(val name = Json.decodeFromJsonElement<IdInfo>(value.content).name){
+                    "useState" -> {
+                        object: NativeMemberInvoker {
+                            override fun call(args: List<Any?>?): Any? {
+                                val stateValue = scope.visitAndGetState!!(args!![0])
+                                val index = stateValue.first
+                                return JsArray().apply {
+                                    push(stateValue.second)
+                                    push(object: NativeMemberInvoker {
+                                        override fun call(args: List<Any?>?): Any? {
+                                            scope.updateState!!(index, args!![0])
+                                            return null
+                                        }
+                                    })
                                 }
-                            })
+                            }
                         }
                     }
-                }
-            }
-            return scope.getVar(name)
-        } else if (value.type == TYPE_EXPR_OBJECT) {
-            val properties = Json.decodeFromJsonElement<List<ObjectProperty>>(value.content)
-            val obj = JsObject()
-            properties.forEach {
-                val key = if (it.computed) {
-                    parseExprValue(it.key, scope)
-                } else {
-                    if (it.key.type == TYPE_EXPR_ID) {
-                        Json.decodeFromJsonElement<IdInfo>(it.key.content).name
-                    } else {
-                        null
+                    "useCallback" -> {
+                        object: NativeMemberInvoker {
+                            override fun call(args: List<Any?>?): Any? {
+                                return scope.visitAndGetCallback!!(args!![0] as Function)
+                            }
+                        }
+                    }
+                    "useEffect" -> {
+                        object: NativeMemberInvoker {
+                            override fun call(args: List<Any?>?): Any? {
+                                scope.checkAndRunEffect!!(args!![0] as Function, args[1] as JsArray)
+                                return null
+                            }
+                        }
+                    }
+                    else -> {
+                        dataSource.getExitModule(name) ?: scope.getVar(name)
                     }
                 }
+            }
+            TYPE_EXPR_OBJECT -> {
+                val properties = Json.decodeFromJsonElement<List<ObjectProperty>>(value.content)
+                val obj = JsObject()
+                properties.forEach {
+                    val key = if (it.computed) {
+                        parseExprValue(it.key, scope)
+                    } else {
+                        if (it.key.type == TYPE_EXPR_ID) {
+                            Json.decodeFromJsonElement<IdInfo>(it.key.content).name
+                        } else {
+                            null
+                        }
+                    }
 
-                val pValue = parseExprValue(it.value, scope)
-                if (key != null) {
-                    obj.setValue(key, pValue)
+                    val pValue = parseExprValue(it.value, scope)
+                    if (key != null) {
+                        obj.setValue(key, pValue)
+                    }
+                }
+                return obj
+            }
+            TYPE_EXPR_CALL -> {
+                val callExpr = Json.decodeFromJsonElement<CallExpr>(value.content)
+                val memberFunc = parseExprValue(callExpr.callee, scope)
+                val arguments = callExpr.arguments.map {
+                    parseExprValue(it, scope)
+                }
+                if(memberFunc is NativeMemberInvoker){
+                    return memberFunc.call(arguments)
+                }
+                if(memberFunc is Function){
+                    val functionDecl = memberFunc.toFunctionDecl()
+                    return normalEval(functionDecl, scope, null, functionDecl.param?.mapIndexed { index, node ->
+                        val name = Json.decodeFromJsonElement<IdInfo>(node.content).name
+                        name to arguments.getOrNull(index)
+                    })
+                }
+                return memberFunc
+            }
+            TYPE_EXPR_MEMBER -> {
+                val memberExpr = Json.decodeFromJsonElement<MemberExpr>(value.content)
+                val obj = parseExprValue(memberExpr.obj, scope)
+                if(leftValue){
+                    return parseMemberGetter(obj!!, memberExpr.computed, memberExpr.property, scope)
+                }
+                return parseMember(obj!!, memberExpr.computed, memberExpr.property, scope)
+            }
+            TYPE_EXPR_UPDATE -> {
+                val updateExpr = Json.decodeFromJsonElement<UpdateExpr>(value.content)
+                val argumentName = Json.decodeFromJsonElement<IdInfo>(updateExpr.argument.content)
+                val cv = scope.getVar(argumentName.name)
+                val currentValue = if (cv is Int) cv else (cv as Float).toInt()
+                val nextValue: Int = when (updateExpr.operator) {
+                    "++" -> currentValue + 1
+                    "--" -> currentValue - 1
+                    else -> {
+                        throw RuntimeException("Not supported")
+                    }
+                }
+                scope.setVar(argumentName.name, nextValue)
+                return if (updateExpr.prefix) {
+                    nextValue
+                } else {
+                    currentValue
                 }
             }
-            return obj
-        } else if (value.type == TYPE_EXPR_CALL) {
-            val callExpr = Json.decodeFromJsonElement<CallExpr>(value.content)
-            val memberFunc = parseExprValue(callExpr.callee, scope)
-            val arguments = callExpr.arguments.map {
-                parseExprValue(it, scope)
-            }
-            return (memberFunc as? NativeMemberInvoker)?.call(arguments) ?: memberFunc
-        } else if (value.type == TYPE_EXPR_MEMBER) {
-            val memberExpr = Json.decodeFromJsonElement<MemberExpr>(value.content)
-            val obj = parseExprValue(memberExpr.obj, scope)
-            val ret = parseMember(obj!!, memberExpr.computed, memberExpr.property, scope)
-            return ret
-        } else if (value.type == TYPE_EXPR_UPDATE) {
-            val updateExpr = Json.decodeFromJsonElement<UpdateExpr>(value.content)
-            val argumentName = Json.decodeFromJsonElement<IdInfo>(updateExpr.argument.content)
-            val cv = scope.getVar(argumentName.name)
-            val currentValue = if (cv is Int) cv else (cv as Float).toInt()
-            val nextValue: Int = when (updateExpr.operator) {
-                "++" -> currentValue + 1
-                "--" -> currentValue - 1
-                else -> {
-                    throw RuntimeException("Not supported")
+            TYPE_EXPR_ASSIGN -> {
+                val assignExpr = Json.decodeFromJsonElement<AssignExpr>(value.content)
+                val rightValue = parseExprValue(assignExpr.right, scope)
+                val setter = parseExprValue(assignExpr.left, scope, true)
+                if(assignExpr.operator == "="){
+                    (setter as? MemberInvoker)?.invoke(rightValue)
                 }
+                return rightValue
             }
-            scope.setVar(argumentName.name, nextValue)
-            return if (updateExpr.prefix) {
-                nextValue
-            } else {
-                currentValue
-            }
+            else -> throw RuntimeException("not supported var parser: $value")
         }
-        throw RuntimeException("not supported var parser: $value")
     }
 
     private fun parseMember(obj: Any, computed: Boolean, value: Node, scope: Scope): Any? {
@@ -362,6 +481,23 @@ class JsEvaluator {
         } else if (value.type == TYPE_EXPR_ID) {
             val idInfo = Json.decodeFromJsonElement<IdInfo>(value.content)
             return obj.getMember(idInfo.name)
+        }
+        return null
+    }
+
+    private fun parseMemberGetter(obj: Any, computed: Boolean, value: Node, scope: Scope): ((Any?) -> Unit)? {
+        if (obj !is MemberProvider) {
+            throw RuntimeException("not a member provider. $obj")
+        }
+
+        if (computed) {
+            val name = parseExprValue(value, scope)
+            if (name != null) {
+                return obj.memberSetter(name)
+            }
+        } else if (value.type == TYPE_EXPR_ID) {
+            val idInfo = Json.decodeFromJsonElement<IdInfo>(value.content)
+            return obj.memberSetter(idInfo.name)
         }
         return null
     }
@@ -447,10 +583,14 @@ class JsEvaluator {
 }
 
 class Scope(val parentScope: Scope?) {
-    private val varList = HashMap<String, Any?>()
+    val varList = HashMap<String, Any?>()
 
     var updateState: ((Int, Any?) -> Unit)? = parentScope?.updateState
     var visitAndGetState: ((defaultValue: Any?) -> Pair<Int, Any?>)? = parentScope?.visitAndGetState
+
+    var visitAndGetCallback: ((defaultValue: Function) -> Function)? = parentScope?.visitAndGetCallback
+
+    var checkAndRunEffect: ((effect: Function, deps: JsArray) -> Unit)? = parentScope?.checkAndRunEffect
 
     fun getVar(variable: String): Any? {
         return varList[variable] ?: parentScope?.getVar(variable)
@@ -463,6 +603,7 @@ class Scope(val parentScope: Scope?) {
 
 internal interface MemberProvider {
     fun getMember(name: Any): Any?
+    fun memberSetter(name: Any): MemberInvoker
 }
 
 class JsObject : MemberProvider {
@@ -479,9 +620,15 @@ class JsObject : MemberProvider {
     override fun getMember(name: Any): Any? {
         return fields[name]
     }
+
+    override fun memberSetter(name: Any): MemberInvoker {
+        return {
+            fields[name] = it
+        }
+    }
 }
 
-internal class JsArray : MemberProvider {
+class JsArray : MemberProvider {
     private var list = arrayListOf<Any?>()
 
     fun push(item: Any?) {
@@ -490,6 +637,29 @@ internal class JsArray : MemberProvider {
 
     fun get(index: Int): Any? {
         return list[index]
+    }
+
+    fun itemCount():Int {
+        return list.size
+    }
+
+    override fun hashCode(): Int {
+        return 31 + list.hashCode()
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if(other !is JsArray){
+            return false
+        }
+        if(other.list.size != list.size){
+            return false
+        }
+        for(i in 0 until other.list.size){
+            if(list[i] != other.list[i]){
+                return false
+            }
+        }
+        return true
     }
 
     override fun getMember(name: Any): Any? {
@@ -514,6 +684,19 @@ internal class JsArray : MemberProvider {
             }
         }
     }
+
+    override fun memberSetter(name: Any):MemberInvoker {
+        if(name is Float){
+            return {
+                list[name.toInt()] = it
+            }
+        }else if(name is Int){
+            return {
+                list[name] = it
+            }
+        }
+        throw RuntimeException("Not supported memberSetter: $name")
+    }
 }
 
 internal interface NativeMemberInvoker {
@@ -524,3 +707,7 @@ internal interface NativeMemberInvoker {
 class StackFrame(val parentScope: Scope, val prevFrame: StackFrame?) {
     val scope = Scope(parentScope)
 }
+
+class JsEffect(val function: Function, val lastValueList: JsArray? = null)
+
+typealias MemberInvoker = (Any?) -> Unit

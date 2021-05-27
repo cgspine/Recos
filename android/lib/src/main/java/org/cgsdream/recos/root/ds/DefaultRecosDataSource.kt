@@ -1,6 +1,5 @@
 package org.cgsdream.recos.root.ds
 
-import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
@@ -51,7 +50,11 @@ class DefaultRecosDataSource(val bundleProvider: BundleProvider): RecosDataSourc
         }
     }
 
-    override suspend fun getModule(moduleName: String): FunctionDecl {
+    override fun getExitModule(moduleName: String): FunctionDecl? {
+        return functionList[moduleName]
+    }
+
+    override suspend fun getModuleAndWait(moduleName: String): FunctionDecl {
         val exist = functionList[moduleName]
         if(exist != null){
             return exist

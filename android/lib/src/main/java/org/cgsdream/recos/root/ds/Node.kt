@@ -18,6 +18,8 @@ const val TYPE_EXPR_MEMBER = 105
 const val TYPE_EXPR_OBJECT = 106
 const val TYPE_EXPR_FUNCTION = 107
 const val TYPE_EXPR_ID = 108
+const val TYPE_EXPR_ARRAY_FUNCTION = 109
+const val TYPE_EXPR_ASSIGN = 110
 
 
 const val TYPE_STATEMENT_BLOCK = 200
@@ -40,6 +42,10 @@ data class Node(
     val content: JsonElement
 )
 
+interface Function {
+    fun toFunctionDecl(): FunctionDecl
+}
+
 @Serializable
 data class FunctionDecl(
     @Serializable
@@ -52,7 +58,11 @@ data class FunctionDecl(
     val param: List<Node>? = null,
     @Serializable
     val body: Node
-)
+): Function {
+    override fun toFunctionDecl(): FunctionDecl {
+        return this
+    }
+}
 
 @Serializable
 data class FunctionExpr(
@@ -64,9 +74,21 @@ data class FunctionExpr(
     val params: List<Node>? = null,
     @Serializable
     val body: Node
-){
-    fun toFunctionDecl(): FunctionDecl {
+): Function {
+    override fun toFunctionDecl(): FunctionDecl {
         return FunctionDecl("FunctionExpr", async, generator, params, body)
+    }
+}
+
+@Serializable
+data class FunctionArrayExpr(
+    @Serializable
+    val params: List<Node>? = null,
+    @Serializable
+    val body: Node
+): Function {
+    override fun toFunctionDecl(): FunctionDecl {
+        return FunctionDecl("FunctionArrayExpr", false, false, params, body)
     }
 }
 
@@ -114,6 +136,16 @@ data class BinaryData(
     val operator: String,
     @Serializable
     val right: Node?
+)
+
+@Serializable
+data class AssignExpr(
+    @Serializable
+    val left: Node,
+    @Serializable
+    val operator: String,
+    @Serializable
+    val right: Node
 )
 
 @Serializable

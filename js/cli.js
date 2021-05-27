@@ -46,7 +46,7 @@ function parse(input){
         return ret
     }
     if(input.type === 'FunctionDeclaration'){
-        return node.createFunctionDecl(input.id.name, input.param, input.async, input.generator, parse(input.body))
+        return node.createFunctionDecl(input.id.name, parse(input.params), input.async, input.generator, parse(input.body))
     }else if(input.type === 'BlockStatement'){
         return node.createBlockStatement(parse(input.body))
     }else if(input.type === 'VariableDeclaration'){
@@ -72,6 +72,8 @@ function parse(input){
         return node.createExprBinary(parse(input.left), input.operator, parse(input.right))
     }else if(input.type === 'UpdateExpression'){
         return node.createExprUpdate(parse(input.argument), input.operator, input.prefix)
+    }else if(input.type === 'AssignmentExpression'){
+        return node.createExprAssign(parse(input.left), input.operator, parse(input.right))
     }else if(input.type === 'Identifier'){
         return node.createId(input.name)
     }else if(input.type === 'ExpressionStatement'){
@@ -91,6 +93,8 @@ function parse(input){
         }
     }else if(input.type === 'FunctionExpression'){
         return node.createExprFunction(input.generator, input.async, parse(input.params), parse(input.body))
+    }else if(input.type === 'ArrowFunctionExpression'){
+        return node.createExprArrayFunction(parse(input.params), parse(input.body))
     }else if(input.type === 'IfStatement'){
         return node.createStatementIf(parse(input.test), parse(input.consequent), parse(input.alternate))
     }else if(input.type === 'ReturnStatement'){

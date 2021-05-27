@@ -12,6 +12,8 @@ const TYPE_EXPR_MEMBER = 105
 const TYPE_EXPR_OBJECT = 106
 const TYPE_EXPR_FUNCTION = 107
 const TYPE_EXPR_ID = 108
+const TYPE_EXPR_ARRAY_FUNCTION = 109
+const TYPE_EXPR_ASSIGN = 110
 
 
 const TYPE_STATEMENT_BLOCK = 200
@@ -165,12 +167,33 @@ exports.createExprUpdate = function (argument, operator, prefix) {
     }
 }
 
+exports.createExprAssign = function (left, operator, right) {
+    return {
+        type: TYPE_EXPR_ASSIGN,
+        content: {
+            left,
+            operator,
+            right
+        }
+    }
+}
+
 exports.createExprFunction = function (generator, async, params, body){
     return {
         type: TYPE_EXPR_FUNCTION,
         content: {
             generator,
             async,
+            params,
+            body
+        }
+    }
+}
+
+exports.createExprArrayFunction = function (params, body){
+    return {
+        type: TYPE_EXPR_ARRAY_FUNCTION,
+        content: {
             params,
             body
         }

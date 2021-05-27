@@ -21,7 +21,7 @@ class RecosPage(val dataSource: RecosDataSource,
     private var pageData: FunctionDecl? = null
     private val job: Job = Job()
     private var scope = CoroutineScope(Dispatchers.Main + job)
-    private var jsEvaluator = JsEvaluator()
+    private var jsEvaluator = JsEvaluator(dataSource)
 
     init {
         scope.launch {
@@ -31,7 +31,7 @@ class RecosPage(val dataSource: RecosDataSource,
                 Log.i("cgine", e.stackTraceToString())
             }
 
-            val data = dataSource.getModule(moduleName)
+            val data = dataSource.getModuleAndWait(moduleName)
             pageData = data
             composeView?.setContent {
                 jsEvaluator.Eval(functionDecl = data)
