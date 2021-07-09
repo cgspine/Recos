@@ -10,8 +10,6 @@ import Foundation
 import SwiftyJSON
 import SwiftUI
 
-var itemList: [RecosElement] = []
-
 public struct Stack<T> {
      fileprivate var array = [T]()
      public var isEmpty: Bool {
@@ -35,10 +33,21 @@ public struct Stack<T> {
 
 class JsEvaluator {
     private var TAG = "ComposeJsEvaluator"
-    private var rootScope = Scope(parentScope: nil)
+    var rootScope = Scope(parentScope: nil)
     var stack = Stack<StackFrame>()
     
-    func Eval(functionDecl: FunctionDecl, parentScope: Scope?, args: [String : Any]?) -> Void {
+    func getArgs(nodes: [Node], index: Int) -> [String : Any]? {
+        var result: [String : Any] = [:]
+        nodes.forEach { node in
+            if node.type == TYPE_EXPR_ID {
+                let name = (node.content as! IdInfo).name
+                result[name] = index
+            }
+        }
+        return result
+    }
+    
+    func Eval(functionDecl: FunctionDecl, parentScope: Scope?, args: [String : Any]?) -> AnyView {
         let lastFrame = stack.top
         let frame = StackFrame(parentScope: (parentScope != nil) ? parentScope! : rootScope, prevFrame: lastFrame)
         args?.forEach { it in
@@ -46,11 +55,13 @@ class JsEvaluator {
         }
         stack.push(frame)
         let body = functionDecl.body
-        Exec(node: body, scope: frame.scope!)
+        var view : AnyView?
+        view = Exec(node: body, scope: frame.scope!, view: &view)
         stack.pop()
+        return view!
     }
     
-    func Exec(node: Node, scope: Scope) -> Void {
+    func Exec(node: Node, scope: Scope, view: inout AnyView?) -> AnyView? {
         switch node.type {
         case TYPE_DECL_VAR_LIST:
             let nodeArray = node.content as! [Node]
@@ -59,28 +70,27 @@ class JsEvaluator {
                 let value = parseExprValue(value: varItem.initNode, scope: scope)
                 scope.setVar(variable: varItem.name, value: value)
             }
-            break
+            return view
         case TYPE_DECL_FUNC:
             // TODO
-            
             break
         case TYPE_STATEMENT_BLOCK:
             // TODO block scope to support let/var
             let nodeArray = node.content as! [Node]
             let blockScope = Scope(parentScope: scope)
             for item in nodeArray {
-                Exec(node: item, scope: blockScope)
+                view = Exec(node: item, scope: blockScope, view: &view)
             }
-            break
+            return view
         case TYPE_STATEMENT_FOR:
             let forStatement = node.content as! ForStatement
             let forScope = Scope(parentScope: scope)
-            Exec(node: forStatement.initNode, scope: forScope)
+            view = Exec(node: forStatement.initNode, scope: forScope, view: &view)
             while parseExprValue(value: forStatement.test, scope: forScope) as? Bool == true {
-                Exec(node: forStatement.body, scope: forScope)
-                Exec(node: forStatement.update, scope: forScope)
+                view = Exec(node: forStatement.body, scope: forScope, view: &view)
+                view = Exec(node: forStatement.update, scope: forScope, view: &view)
             }
-            break
+            return view
         case TYPE_EXPR_UPDATE:
             parseExprValue(value: node, scope: scope)
             break
@@ -88,15 +98,15 @@ class JsEvaluator {
             let ifStatement = node.content as! IfStatement
             let ifScope = Scope(parentScope: scope)
             if parseExprValue(value: ifStatement.test, scope: ifScope) as? Bool == true {
-                Exec(node: ifStatement.consequent, scope: ifScope)
+                view = Exec(node: ifStatement.consequent, scope: ifScope, view: &view)
             } else {
-                Exec(node: ifStatement.alternate, scope: ifScope)
+                view = Exec(node: ifStatement.alternate, scope: ifScope, view: &view)
             }
-            break
+            return view
         case TYPE_STATEMENT_RETURN:
             let arg = node.content as! Node
-            Exec(node: arg, scope: scope)
-            break
+            view = Exec(node: arg, scope: scope, view: &view)
+            return view
         case TYPE_JSX_ELEMENT:
             let jsxElement = node.content as! JsxElement
             var props: [String : Any?] = [:]
@@ -109,25 +119,17 @@ class JsEvaluator {
             let count = props["count"] as? Int ?? 0
             
             if jsxElement.name == "RecyclerView" {
-                
-                for index in 0...count - 1 {
-                    let child = (props["render"] as? FunctionExpr)?.toFunctionDecl()
-                    let args = child?.params
-                    
-                    var result: [String : Any] = [:]
-                    
-                    args?.forEach({ node in
-                        if node.type == TYPE_EXPR_ID {
-                            let name = (node.content as! IdInfo).name
-                            result[name] = index
+                let list = List {
+                    ForEach(0..<count) { index in
+                        let child = (props["render"] as? FunctionExpr)?.toFunctionDecl()
+                        let args = child?.params
+                        let result = self.getArgs(nodes: args!, index: index)
+                        if (child != nil) {
+                            self.Eval(functionDecl: child!, parentScope: scope, args: result)
                         }
-                    })
-                    
-                    if (child != nil) {
-                        Eval(functionDecl: child!, parentScope: scope, args: result)
                     }
                 }
-                
+                return AnyView(list)
             } else if jsxElement.name == "Text" {
                 var string = String()
                 jsxElement.children.forEach { item in
@@ -141,16 +143,17 @@ class JsEvaluator {
                         }
                     }
                 }
-                itemList.append(RecosElement(title: string))
                 print("Text: " + string)
+                return AnyView(Text(string))
             }
             break
         case TYPE_STATEMENT_EXPR:
             parseExprValue(value: node.content as! Node, scope: scope)
-            break
+            return view
         default:
-            break
+            return view
         }
+        return view
     }
     
     @discardableResult
@@ -252,8 +255,8 @@ class JsEvaluator {
     
     func parseMember(obj: MemberProvider, computed: Bool, value: Node, scope: Scope) -> Any? {
         if computed {
-            let name = parseExprValue(value: value, scope: scope) as! Int
-            return obj.getMemeber(name: String(name))
+            let name = parseExprValue(value: value, scope: scope)
+            return obj.getMemeber(name: String(name as! Int))
         } else if value.type == TYPE_EXPR_ID {
             let idInfo = value.content as! IdInfo
             return obj.getMemeber(name: idInfo.name)
@@ -358,7 +361,13 @@ class Scope {
     }
     
     func setVar(variable: String, value: Any?) {
-        varList[variable] = value
+        if value is Int {
+            varList[variable] = (value as! Int)
+        } else if value is Float {
+            varList[variable] = (value as! Float)
+        } else {
+            varList[variable] = value
+        }
     }
 }
 
@@ -434,26 +443,14 @@ class JsArray: MemberProvider {
     }
 }
 
-struct RecosElement {
-    var title: String
-//    var image: String
-//    var imageSelect: String
-}
-
-struct TABContentView: View {
-    var body: some View {
-        List {
-            ForEach(itemList, id: \.title) { i in
-                Text(i.title)
-            }
-        }
+struct Eval : View {
+    var functionDecl: FunctionDecl!
+    var parentScope: Scope?
+    @State var args: [String : Any]?
+    @State var evaluator: JsEvaluator
+    
+    var body : some View {
+        evaluator.Eval(functionDecl: functionDecl, parentScope: parentScope, args: args)
     }
 }
-
-struct TABContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        TABContentView()
-    }
-}
-
 

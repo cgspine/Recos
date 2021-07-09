@@ -14,11 +14,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
-        let defaultRecosDataSource = DefaultRecosDataSource.init()
-        defaultRecosDataSource.parse(bundleName: "hello.bundle")
-        guard let function = defaultRecosDataSource.getModel(modleName: "HelloWorld") else { return true }
-        let jsEvaluator = JsEvaluator()
-        jsEvaluator.Eval(functionDecl: function, parentScope: nil, args: nil)
         return true
     }
 

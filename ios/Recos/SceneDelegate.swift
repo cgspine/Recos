@@ -16,7 +16,12 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         if let windowScene = scene as? UIWindowScene {
             let window = UIWindow(windowScene: windowScene)
-            window.rootViewController = UIHostingController(rootView: TABContentView())
+            let defaultRecosDataSource = DefaultRecosDataSource.init()
+            defaultRecosDataSource.parse(bundleName: "hello.bundle")
+            guard let function = defaultRecosDataSource.getModel(modleName: "HelloWorld") else { return }
+            let jsEvaluator = JsEvaluator()
+            let view = Eval(functionDecl: function, parentScope: nil, args: nil, evaluator: jsEvaluator)
+            window.rootViewController = UIHostingController(rootView: view)
             self.window = window
             window.makeKeyAndVisible()
         }
