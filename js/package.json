@@ -12,5 +12,8 @@
     "@babel/parser": "^7.14.2",
     "@babel/plugin-syntax-jsx": "^7.12.13",
     "getopts": "^2.3.0"
+  },
+  "devDependencies": {
+    "@babel/types": "^7.14.5"
   }
 }
