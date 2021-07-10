@@ -11,4 +11,5 @@ import Foundation
 public protocol RecosDataSource {
     func parse(bundleName: String) -> Void
     func getModel(modleName: String) -> FunctionDecl?
+    func getExitModule(modleName: String) -> FunctionDecl?
 }

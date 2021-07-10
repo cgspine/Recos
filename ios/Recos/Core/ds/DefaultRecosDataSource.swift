@@ -10,6 +10,11 @@ import Foundation
 import SwiftyJSON
 
 class DefaultRecosDataSource: RecosDataSource {
+    
+    func getExitModule(modleName: String) -> FunctionDecl? {
+        return self.functionList[modleName]
+    }
+    
     private var functionList: Dictionary<String, FunctionDecl>
     private var waitingChannel: NSMutableDictionary? = nil
     private var loadedBundle: [String]?

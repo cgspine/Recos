@@ -12,6 +12,7 @@ import SwiftyJSON
 let TYPE_DECL_FUNC = 10
 let TYPE_DECL_VAR = 11
 let TYPE_DECL_VAR_LIST = 12
+let TYPE_DECL_VAR_ARRAY_PATTERN = 13
 
 
 let TYPE_EXPR_ARRAY = 100
@@ -22,6 +23,8 @@ let TYPE_EXPR_MEMBER = 105
 let TYPE_EXPR_OBJECT = 106
 let TYPE_EXPR_FUNCTION = 107
 let TYPE_EXPR_ID = 108
+let TYPE_EXPR_ARRAY_FUNCTION = 109
+let TYPE_EXPR_ASSIGN = 110
 
 
 let TYPE_STATEMENT_BLOCK = 200
@@ -46,8 +49,8 @@ class Node {
         let content = json["content"]
         switch type {
         case TYPE_DECL_FUNC:
-            let functionExpr = FunctionDecl(json: content)
-            self.content = functionExpr
+            let functionDecl = FunctionDecl(json: content)
+            self.content = functionDecl
             break
         case TYPE_DECL_VAR:
             let varDecl = ValDecl(json: content)
@@ -142,6 +145,15 @@ class Node {
             let jsxText = JsxText(json: content)
             self.content = jsxText
             break
+        case TYPE_DECL_VAR_ARRAY_PATTERN:
+            let arrayPattern = ArrayPatternValDecl(json: content)
+            self.content = arrayPattern
+        case TYPE_EXPR_ARRAY_FUNCTION:
+            let functionArrayExpr = FunctionArrayExpr(json: content)
+            self.content = functionArrayExpr
+        case TYPE_EXPR_ASSIGN:
+            let assignExpr = AssignExpr(json: content)
+            self.content = assignExpr
         default:
             guard
                 let content = FunctionExpr(json: json["content"])
@@ -157,22 +169,26 @@ public struct FunctionDecl {
     let isAsync: Bool
     let isGenerator: Bool
     let body: Node
-    var params = [Node]()
+    var params: [Node]
     
     init?(json: JSON) {
-        guard
-            let name = json["name"].string,
-            let isAsync = json["isAsync"].bool,
-            let isGenerator = json["isGenerator"].bool,
-            let body = Node(json: json["body"])
-            else {
-            return nil
+        
+        let name = json["name"].string
+        let isAsync = json["isAsync"].bool
+        let isGenerator = json["isGenerator"].bool
+        let body = Node(json: json["body"])
+        
+        var params = [Node]()
+        for (_, item):(String, JSON) in json["param"] {
+            let node = Node(json: item)!
+            params.append(node)
         }
         
-        self.name = name
-        self.isAsync = isAsync
-        self.isGenerator = isGenerator
-        self.body = body
+        self.name = name!
+        self.isAsync = isAsync ?? false
+        self.isGenerator = isGenerator ?? false
+        self.body = body!
+        self.params = params
     }
     
     init(name: String, isAsync: Bool, isGenerator: Bool, body: Node, params: [Node]) {
@@ -202,14 +218,34 @@ struct FunctionExpr {
             params.append(node)
         }
         
-        self.async = async!
-        self.generator = generator!
+        self.async = async ?? false
+        self.generator = generator ?? false
         self.body = body!
         self.params = params
     }
     
     func toFunctionDecl() -> FunctionDecl {
         return FunctionDecl(name: "FunctionExpr", isAsync: async, isGenerator: generator, body: body, params: params)
+    }
+}
+
+struct FunctionArrayExpr : Function {
+    var params: [Node]
+    var body: Node
+    
+    init?(json: JSON) {
+        let body = Node(json: json["body"])
+        var params = [Node]()
+        for (_, item):(String, JSON) in json["params"] {
+            let node = Node(json: item)!
+            params.append(node)
+        }
+        self.body = body!
+        self.params = params
+    }
+    
+    func toFunctionDecl() -> FunctionDecl {
+        return FunctionDecl(name: "FunctionArrayExpr", isAsync: false, isGenerator: false, body: body, params: params)
     }
 }
 
@@ -228,6 +264,28 @@ struct ValDecl {
         self.name = name
         self.kind = kind
         self.initNode = initNode
+    }
+}
+
+struct ArrayPatternValDecl {
+    let nameList: [String]
+    let kind: String
+    let initNode: Node
+    
+    init?(json: JSON) {
+        
+        let kind = json["kind"].string
+        let initNode = Node(json: json["init"])
+        
+        var nameList = [String]()
+        for (_, item):(String, JSON) in json["nameList"] {
+            let node = item.string!
+            nameList.append(node)
+        }
+        
+        self.nameList = nameList
+        self.kind = kind!
+        self.initNode = initNode!
     }
 }
 
@@ -262,6 +320,24 @@ struct NumLiteral {
 }
 
 struct BinaryData {
+    let left: Node
+    let operatorString: String
+    let right: Node
+    
+    init?(json: JSON) {
+        guard
+            let left = Node(json: json["left"]),
+            let operatorString = json["operator"].string,
+            let right = Node(json: json["right"])
+            else { return nil }
+        
+        self.left = left
+        self.operatorString = operatorString
+        self.right = right
+    }
+}
+
+struct AssignExpr {
     let left: Node
     let operatorString: String
     let right: Node

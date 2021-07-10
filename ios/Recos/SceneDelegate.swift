@@ -19,8 +19,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             let defaultRecosDataSource = DefaultRecosDataSource.init()
             defaultRecosDataSource.parse(bundleName: "hello.bundle")
             guard let function = defaultRecosDataSource.getModel(modleName: "HelloWorld") else { return }
-            let jsEvaluator = JsEvaluator()
-            let view = Eval(functionDecl: function, parentScope: nil, args: nil, evaluator: jsEvaluator)
+            let jsEvaluator = JsEvaluator(dataSource: defaultRecosDataSource)
+            let view = EvalView(functionDecl: function, parentScope: nil, args: nil, evaluator: jsEvaluator)
             window.rootViewController = UIHostingController(rootView: view)
             self.window = window
             window.makeKeyAndVisible()
