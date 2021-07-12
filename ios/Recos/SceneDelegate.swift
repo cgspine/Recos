@@ -16,12 +16,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         if let windowScene = scene as? UIWindowScene {
             let window = UIWindow(windowScene: windowScene)
-            let defaultRecosDataSource = DefaultRecosDataSource.init()
-            defaultRecosDataSource.parse(bundleName: "hello.bundle")
-            guard let function = defaultRecosDataSource.getModel(modleName: "HelloWorld") else { return }
-            let jsEvaluator = JsEvaluator(dataSource: defaultRecosDataSource)
-            let view = EvalView(functionDecl: function, parentScope: nil, args: nil, evaluator: jsEvaluator)
-            window.rootViewController = UIHostingController(rootView: view)
+            window.rootViewController = UIHostingController(rootView: ContentView())
             self.window = window
             window.makeKeyAndVisible()
         }

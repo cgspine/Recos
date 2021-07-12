@@ -40,7 +40,7 @@ class AssetBundleProvider: BundleProvider {
     }
 
     func getBundleContent(bundleName: String) -> String {
-        if let fileURL = Bundle.main.url(forResource: "hello", withExtension: "bundle") {
+        if let fileURL = Bundle.main.url(forResource: bundleName, withExtension: "bundle") {
             if let fileContents = try? String(contentsOf: fileURL) {
                 print("AssetBundleProvider" + fileContents)
                 return fileContents

@@ -25,6 +25,7 @@ let TYPE_EXPR_FUNCTION = 107
 let TYPE_EXPR_ID = 108
 let TYPE_EXPR_ARRAY_FUNCTION = 109
 let TYPE_EXPR_ASSIGN = 110
+let TYPE_EXPR_EXPRESSION = 111
 
 
 let TYPE_STATEMENT_BLOCK = 200
@@ -44,9 +45,15 @@ class Node {
     let content: Any?
     
     init?(json: JSON) {
+        
+        if (json.isEmpty) {
+           return nil
+        }
+        
         let type = json["type"].int
         self.type = type ?? 0
         let content = json["content"]
+        
         switch type {
         case TYPE_DECL_FUNC:
             let functionDecl = FunctionDecl(json: content)
@@ -154,6 +161,9 @@ class Node {
         case TYPE_EXPR_ASSIGN:
             let assignExpr = AssignExpr(json: content)
             self.content = assignExpr
+        case TYPE_EXPR_EXPRESSION:
+            let expression = SequenceExpr(json: content)
+            self.content = expression
         default:
             guard
                 let content = FunctionExpr(json: json["content"])
@@ -509,15 +519,16 @@ struct JsxElement {
 
 struct JsxProp {
     let name: String
-    let value: Node
+    let value: Node?
     
     init?(json: JSON) {
         guard
-            let name = json["name"].string,
-            let value = Node(json: json["value"])
+            let name = json["name"].string
             else { return nil }
         
         self.name = name
+        
+        let value = Node(json: json["value"])
         self.value = value
     }
 }
@@ -531,5 +542,18 @@ struct JsxText {
             else { return nil }
         
         self.text = text
+    }
+}
+
+struct SequenceExpr {
+    let expressions: [Node]
+    
+    init?(json: JSON) {
+        var expressions = [Node]()
+        for (_, item):(String, JSON) in json["expression"] {
+            let node = Node(json: item)!
+            expressions.append(node)
+        }
+        self.expressions = expressions
     }
 }

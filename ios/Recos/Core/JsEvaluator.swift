@@ -12,12 +12,15 @@ import SwiftUI
 
 public struct Stack<T> {
      fileprivate var array = [T]()
+    
      public var isEmpty: Bool {
          return array.isEmpty
      }
+    
      public var count: Int {
         return array.count
      }
+    
      public mutating func push(_ element: T) {
         array.append(element)
      }
@@ -26,6 +29,7 @@ public struct Stack<T> {
      public mutating func pop() -> T? {
         return array.popLast()
      }
+    
      public var top: T? {
         return array.last
      }
@@ -74,7 +78,7 @@ class JsEvaluator {
                 nodeArray.forEach { it in
                     if it.type == TYPE_DECL_VAR {
                         let varItem = it.content as! ValDecl
-                        scope.setVar(variable: varItem.name, value: parseExprValue(value:varItem.initNode, scope:scope))
+                        scope.setVar(variable: varItem.name, value: parseExprValue(value:varItem.initNode, scope: scope))
                     } else if it.type == TYPE_DECL_VAR_ARRAY_PATTERN {
                         let varList = it.content as! ArrayPatternValDecl
                         let initValue = parseExprValue(value: varList.initNode, scope: scope)
@@ -223,10 +227,25 @@ class JsEvaluator {
         case TYPE_JSX_ELEMENT:
             let jsxElement = node.content as! JsxElement
             var props: [String : Any?] = [:]
+            var styles = [JsObject]()
             
             jsxElement.props.forEach({ item in
-                let value = parseExprValue(value: item.value, scope: scope)
-                props[item.name] = value
+                if item.value != nil {
+                    if item.name == "style" {
+                        if item.value?.type == TYPE_EXPR_EXPRESSION {
+                            let sequenceExpr = item.value?.content as! SequenceExpr
+                            for it in sequenceExpr.expressions {
+                                let value = parseExprValue(value: it, scope: scope)
+                                styles.append(value as! JsObject)
+                            }
+                        }
+                    } else {
+                        let value = parseExprValue(value: item.value!, scope: scope)
+                        props[item.name] = value
+                    }
+                } else {
+                    print("jsxElement no item value")
+                }
             })
             
             if jsxElement.name == "RecyclerView" {
@@ -265,12 +284,45 @@ class JsEvaluator {
                         }
                     }
                 }
-                print("Text: " + string)
+                
+//                print("Text: " + string)
                 let functionDecl = (props["onClick"] as? Function)?.toFunctionDecl()
-                let text = Text(string).onTapGesture {
-                    print("点击了text")
-                    scope.parentScope?.parentScope?.parentScope?.setVar(variable: "needUpdate", value: true)
-                    self.normalEval(functionDecl: functionDecl!, parentScope: scope, args: nil, selfValue: nil)
+                var height: Float = 0
+                var fontSize: Float = 0
+                var fontColor: UIColor?
+                
+                for style in styles {
+                    let value = style.getValue(variable: "height")
+                    if value != nil {
+                        height = value as! Float
+                    }
+                    let fontSizeValue = style.getValue(variable: "fontSize")
+                    if fontSizeValue != nil {
+                        fontSize = fontSizeValue as! Float
+                    }
+                    let fontColorValue = style.getValue(variable: "color")
+                    if fontColorValue != nil {
+                        fontColor = UIColor.init(hex: fontColorValue as! String)
+                    }
+                }
+                
+                let text = Text(string)
+                .if(height > 0) { content in
+                    content.frame(height: CGFloat(height))
+                }
+                .if(functionDecl != nil) { content in
+                    content.onTapGesture {
+                        print("点击了text")
+                        scope.parentScope?.parentScope?.parentScope?.setVar(variable: "needUpdate", value: true)
+                        self.normalEval(functionDecl: functionDecl!, parentScope: scope, args: nil, selfValue: nil)
+                    }
+                }
+                .if(fontSize > 0) { content in
+                    let font = Font.system(size: CGFloat(fontSize))
+                    content.font(font)
+                }
+                .if(fontColor != nil) { content in
+                    content.foregroundColor(Color.init(fontColor!))
                 }
                 return AnyView(text)
             }
@@ -434,7 +486,6 @@ class JsEvaluator {
             }
             return obj
         }else if(value.type == TYPE_EXPR_CALL) {
-            
             let callExpr = value.content as! CallExpr
             let memberFunc = parseExprValue(value: callExpr.callee, scope: scope)
             var arguments = [Any?]()
@@ -461,9 +512,7 @@ class JsEvaluator {
             return memberFunc
             
         } else if(value.type == TYPE_EXPR_MEMBER) {
-            
             let memberExpr = value.content as! MemeberExpr
-            
             let obj = parseExprValue(value: memberExpr.obj, scope: scope)
             if obj is MemberProvider {
                 if leftValue {
@@ -473,7 +522,7 @@ class JsEvaluator {
                 let ret = parseMember(obj: obj as! MemberProvider, computed: memberExpr.computed, value: memberExpr.property, scope: scope)
                 return ret
             }
-            assert(false, "can not be empty")
+            assert(false, "can not support this type")
             return nil
         } else if(value.type == TYPE_EXPR_UPDATE) {
             let updateExpr = value.content as! UpdateExpr
@@ -495,7 +544,7 @@ class JsEvaluator {
             default:
                 nextValue += 1
             }
-            print(String(nextValue))
+//            print(String(nextValue))
             scope.setVar(variable: argumentName.name, value: nextValue)
             if updateExpr.prefix {
                 return Float(nextValue)
@@ -511,8 +560,15 @@ class JsEvaluator {
                 setter(rightValue)
             }
             return rightValue
+        } else if(value.type == TYPE_EXPR_EXPRESSION) {
+            let sequenceExpr = value.content as! SequenceExpr
+            for item in sequenceExpr.expressions {
+                parseExprValue(value: item, scope: scope)
+            }
+            let a = 0
+            return a
         }
-        assert(false, "can not be empty")
+        assert(false, "can not support this type")
     }
     
     func parseMember(obj: MemberProvider, computed: Bool, value: Node, scope: Scope) -> Any? {
@@ -562,11 +618,9 @@ class JsEvaluator {
             } else {
                 if leftValue is Int {
                     let value = Float((leftValue as! Int)) + (rightValue as! Float)
-                    print("你好" + String(value))
                     return value
                 }
                 let value = (leftValue as! Float) + (rightValue as! Float)
-                print("你好" + String(value))
                 return value
             }
         case "-":
@@ -620,6 +674,16 @@ class JsEvaluator {
         case "||":
             return (leftValue as! Bool) || (rightValue as! Bool)
 //        case "&":
+//            if leftValue is Int && rightValue is Float {
+//                return (leftValue as! Int) & Int(rightValue as! Float)
+//            }
+//            if leftValue is Int && rightValue is Int {
+//                return (leftValue as! Int) & (rightValue as! Int)
+//            }
+//            if leftValue is Float && rightValue is Int {
+//                return Int((leftValue as! Float)) & (rightValue as! Int)
+//            }
+//            return (leftValue as! Float) & (rightValue as! Float)
 ////            return leftUsed & rightUsed
 //            return 0
 //        case "|":
@@ -641,6 +705,8 @@ class Scope {
     var visitAndGetCallback: ((Function) -> Function)?
     var checkAndRunEffect: ((Function, JsArray) -> Void)?
     
+    var extraVarList: [String : Any] = [:]
+    
     init(parentScope: Scope?) {
         self.parentScope = parentScope
         self.updateState = parentScope?.updateState
@@ -661,6 +727,21 @@ class Scope {
             varList[variable] = NSNull()
         } else {
             varList[variable] = value
+        }
+    }
+    
+    func getExtraVar(variable: String) -> Any? {
+        if (extraVarList[variable] != nil) {
+            return extraVarList[variable]
+        }
+        return parentScope?.getExtraVar(variable: variable)
+    }
+    
+    func setExtraVar(variable: String, value: Any?) {
+        if value == nil {
+            extraVarList[variable] = NSNull()
+        } else {
+            extraVarList[variable] = value
         }
     }
 }
@@ -824,7 +905,23 @@ struct EvalView : View {
     var parentScope: Scope?
     @State var args: [String : Any]?
     @State var evaluator: JsEvaluator
-    @StateObject var recosObserve = RecosObservedObject()
+    @ObservedObject var recosObserve = RecosObservedObject()
+    
+    init(bundleName: String) {
+        let defaultRecosDataSource = DefaultRecosDataSource.init()
+        defaultRecosDataSource.parse(bundleName: bundleName)
+        let function = defaultRecosDataSource.getModel(modleName: "HelloWorld")
+        let jsEvaluator = JsEvaluator(dataSource: defaultRecosDataSource)
+        self.evaluator = jsEvaluator
+        self.functionDecl = function
+    }
+    
+    init(functionDecl: FunctionDecl, parentScope: Scope, args: [String : Any]?, evaluator: JsEvaluator) {
+        self.functionDecl = functionDecl
+        self.parentScope = parentScope
+        self.args = args
+        self.evaluator = evaluator
+    }
     
     var body : some View {
         evaluator.ExecWithState(functionDecl: functionDecl, parentScope: (parentScope != nil) ? parentScope : evaluator.rootScope, args: args, recosObserveObject: recosObserve)
@@ -851,6 +948,148 @@ class RecosObservedObject : ObservableObject {
     
     func updateStateItem(index : Int, value: Any?) -> Void {
         self.state[index] = value
+    }
+}
+
+extension View {
+    func `if`<TrueContent>(_ condition: Bool, @ViewBuilder  transform: @escaping (Self) -> TrueContent)
+        -> ConditionalWrapper1<Self, TrueContent> where TrueContent: View {
+            ConditionalWrapper1<Self, TrueContent>(content: { self },
+                                                   conditional: Conditional<Self, TrueContent>(condition: condition,
+                                                                                               transform: transform))
+    }
+
+    func `if`<TrueContent: View, Item>(`let` item: Item?, @ViewBuilder transform: @escaping (Self, Item) -> TrueContent)
+        -> ConditionalWrapper1<Self, TrueContent> {
+            if let item = item {
+                return self.if(true, transform: {
+                    transform($0, item)
+                })
+            } else {
+                return self.if(false, transform: {
+                    transform($0, item!)
+                })
+            }
+    }
+}
+
+struct Conditional<Content: View, Trans: View> {
+    let condition: Bool
+    let transform: (Content) -> Trans
+}
+
+struct ConditionalWrapper1<Content: View, Trans1: View>: View {
+    var content: () -> Content
+    var conditional: Conditional<Content, Trans1>
+
+    func elseIf<Trans2: View>(_ condition: Bool, @ViewBuilder transform: @escaping (Content) -> Trans2)
+        -> ConditionalWrapper2<Content, Trans1, Trans2> {
+            ConditionalWrapper2(content: content,
+                                conditionals: (conditional,
+                                               Conditional(condition: condition,
+                                                           transform: transform)))
+    }
+
+    func elseIf<Trans2: View, Item>(`let` item: Item?, @ViewBuilder transform: @escaping (Content, Item) -> Trans2)
+        -> ConditionalWrapper2<Content, Trans1, Trans2> {
+            let optionalConditional: Conditional<Content, Trans2>
+            if let item = item {
+                optionalConditional = Conditional(condition: true) {
+                    transform($0, item)
+                }
+            } else {
+                optionalConditional = Conditional(condition: false) {
+                    transform($0, item!)
+                }
+            }
+            return ConditionalWrapper2(content: content,
+                                       conditionals: (conditional, optionalConditional))
+    }
+
+    func `else`<ElseContent: View>(@ViewBuilder elseTransform: @escaping (Content) -> ElseContent)
+        -> ConditionalWrapper2<Content, Trans1, ElseContent> {
+            ConditionalWrapper2(content: content,
+                                conditionals: (conditional,
+                                               Conditional(condition: !conditional.condition,
+                                                           transform: elseTransform)))
+    }
+
+    var body: some View {
+        Group {
+            if conditional.condition {
+                conditional.transform(content())
+            } else {
+                content()
+            }
+        }
+    }
+}
+
+struct ConditionalWrapper2<Content: View, Trans1: View, Trans2: View>: View {
+    var content: () -> Content
+    var conditionals: (Conditional<Content, Trans1>, Conditional<Content, Trans2>)
+
+    func `else`<ElseContent: View>(@ViewBuilder elseTransform: (Content) -> ElseContent) -> some View {
+        Group {
+            if conditionals.0.condition {
+                conditionals.0.transform(content())
+            } else if conditionals.1.condition {
+                conditionals.1.transform(content())
+            } else {
+                elseTransform(content())
+            }
+        }
+    }
+
+    var body: some View {
+        self.else { $0 }
+    }
+}
+
+extension UIColor {
+
+    public convenience init(hex: String) {
+
+        var red:   CGFloat = 0.0
+        var green: CGFloat = 0.0
+        var blue:  CGFloat = 0.0
+        var alpha: CGFloat = 1.0
+        var hex:   String = hex
+
+        if hex.hasPrefix("#") {
+            let index = hex.index(hex.startIndex, offsetBy: 1)
+            hex = String(hex[index...])
+        }
+
+        let scanner = Scanner(string: hex)
+        var hexValue: CUnsignedLongLong = 0
+        if scanner.scanHexInt64(&hexValue) {
+            switch (hex.count) {
+            case 3:
+                red   = CGFloat((hexValue & 0xF00) >> 8)       / 15.0
+                green = CGFloat((hexValue & 0x0F0) >> 4)       / 15.0
+                blue  = CGFloat(hexValue & 0x00F)              / 15.0
+            case 4:
+                red   = CGFloat((hexValue & 0xF000) >> 12)     / 15.0
+                green = CGFloat((hexValue & 0x0F00) >> 8)      / 15.0
+                blue  = CGFloat((hexValue & 0x00F0) >> 4)      / 15.0
+                alpha = CGFloat(hexValue & 0x000F)             / 15.0
+            case 6:
+                red   = CGFloat((hexValue & 0xFF0000) >> 16)   / 255.0
+                green = CGFloat((hexValue & 0x00FF00) >> 8)    / 255.0
+                blue  = CGFloat(hexValue & 0x0000FF)           / 255.0
+            case 8:
+                red   = CGFloat((hexValue & 0xFF000000) >> 24) / 255.0
+                green = CGFloat((hexValue & 0x00FF0000) >> 16) / 255.0
+                blue  = CGFloat((hexValue & 0x0000FF00) >> 8)  / 255.0
+                alpha = CGFloat(hexValue & 0x000000FF)         / 255.0
+            default:
+                print("Invalid RGB string, number of characters after '#' should be either 3, 4, 6 or 8", terminator: "")
+            }
+        } else {
+            print("Scan hex error")
+        }
+        self.init(red:red, green:green, blue:blue, alpha:alpha)
     }
 }
 
