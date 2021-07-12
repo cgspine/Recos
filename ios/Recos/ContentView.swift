@@ -14,10 +14,10 @@ struct ContentView : View {
         NavigationView {
             List {
                 NavigationLink(destination: EvalView(bundleName: "differentHeight")) {
-                    Text("列表视图：不同的高度")
+                    Text("ListView: have different style, can click")
                 }
                 NavigationLink(destination: EvalView(bundleName: "hello")) {
-                    Text("列表视图：点击文本，count增加")
+                    Text("ListView: show a lot of data, can click")
                 }
             }
             .listStyle(GroupedListStyle())

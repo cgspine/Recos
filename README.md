@@ -84,3 +84,7 @@ node cli.js -s hello.tsx -o hello.bundle
 Put the output file `hello.bundle` into Android project's `app/src/main/assets`, compile the Android app and we will see:
 
 <img src="imgs/recyclerview_demo.gif" width="300">
+
+The example for iOS:
+
+<img src="imgs/ios_demo.gif" width="300">

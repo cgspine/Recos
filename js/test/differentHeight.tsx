@@ -22,7 +22,7 @@ function HelloWorld(current) {
     useEffect(() => {
         let ret = []
         ret.push({
-            name: '我是红色的数据 高度100',
+            name: 'is red data, height = 100',
             index: 0,
             count: 0,
             height: 100,
@@ -30,7 +30,7 @@ function HelloWorld(current) {
             color: '#FF0000' // red
         })
         ret.push({
-            name: '我是黑色的数据 高度150',
+            name: 'is black data, height = 150',
             index: 1,
             count: 10,
             height: 150,
@@ -38,7 +38,7 @@ function HelloWorld(current) {
             color: '#000000' // black
         })
         ret.push({
-            name: '我是蓝色的数据 高度60',
+            name: 'is blue data, height = 60',
             index: 2,
             count: 20,
             height: 60,
@@ -46,7 +46,7 @@ function HelloWorld(current) {
             color: '#0000FF' // blue
         })
         ret.push({
-            name: '我是蓝色的数据',
+            name: 'is blue data',
             index: 3,
             count: 20,
             height: 150,
@@ -54,7 +54,7 @@ function HelloWorld(current) {
             color: '#0000FF' // blue
         })
         ret.push({
-            name: '我是蓝色的数据',
+            name: 'is blue data',
             index: 4,
             count: 20,
             height: 200,
@@ -62,7 +62,7 @@ function HelloWorld(current) {
             color: '#0000FF' // blue
         })
         ret.push({
-            name: '我是蓝色的数据',
+            name: 'is blue data',
             index: 5,
             count: 20,
             height: 165,
@@ -70,7 +70,7 @@ function HelloWorld(current) {
             color: '#0000FF' // blue
         })
         ret.push({
-            name: '我是蓝色的数据',
+            name: 'is blue data',
             index: 6,
             count: 20,
             height: 200,
@@ -78,7 +78,7 @@ function HelloWorld(current) {
             color: '#0000FF' // blue
         })
         ret.push({
-            name: '我是蓝色的数据',
+            name: 'is blue data',
             index: 7,
             count: 20,
             height: 180,
@@ -86,7 +86,7 @@ function HelloWorld(current) {
             color: '#0000FF' // blue
         })
         ret.push({
-            name: '我是蓝色的数据',
+            name: 'is blue data',
             index: 8,
             count: 20,
             height: 200,

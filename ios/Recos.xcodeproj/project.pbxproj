@@ -20,10 +20,10 @@
 		209245EC26922A2A00C0DF61 /* BundleProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 209245E526922A2A00C0DF61 /* BundleProvider.swift */; };
 		209245ED26922A2A00C0DF61 /* AssetBundleProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 209245E626922A2A00C0DF61 /* AssetBundleProvider.swift */; };
 		2092461426922A7800C0DF61 /* hello.tsx in Resources */ = {isa = PBXBuildFile; fileRef = 2092460126922A7800C0DF61 /* hello.tsx */; };
-		2092461526922A7800C0DF61 /* hello.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 2092460226922A7800C0DF61 /* hello.bundle */; };
 		20F5BEF4269C44BE006DDA1D /* differentHeight.tsx in Resources */ = {isa = PBXBuildFile; fileRef = 20F5BEF2269C44BE006DDA1D /* differentHeight.tsx */; };
 		20F5BEF8269C6C23006DDA1D /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20F5BEF7269C6C22006DDA1D /* ContentView.swift */; };
-		20F5BF00269C8FC4006DDA1D /* differentHeight.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 20F5BEFF269C8FC4006DDA1D /* differentHeight.bundle */; };
+		20F5BF02269C9A58006DDA1D /* differentHeight.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 20F5BF01269C9A58006DDA1D /* differentHeight.bundle */; };
+		20F5BF04269C9A5F006DDA1D /* hello.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 20F5BF03269C9A5F006DDA1D /* hello.bundle */; };
 		532982EAC114539BA33A9E3B /* Pods_Recos.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EF279DA44200C7FDD1CFFA77 /* Pods_Recos.framework */; };
 /* End PBXBuildFile section */
 
@@ -43,10 +43,10 @@
 		209245E526922A2A00C0DF61 /* BundleProvider.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BundleProvider.swift; sourceTree = "<group>"; };
 		209245E626922A2A00C0DF61 /* AssetBundleProvider.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AssetBundleProvider.swift; sourceTree = "<group>"; };
 		2092460126922A7800C0DF61 /* hello.tsx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = hello.tsx; sourceTree = "<group>"; };
-		2092460226922A7800C0DF61 /* hello.bundle */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = hello.bundle; sourceTree = "<group>"; };
 		20F5BEF2269C44BE006DDA1D /* differentHeight.tsx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = differentHeight.tsx; sourceTree = "<group>"; };
 		20F5BEF7269C6C22006DDA1D /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		20F5BEFF269C8FC4006DDA1D /* differentHeight.bundle */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = differentHeight.bundle; sourceTree = "<group>"; };
+		20F5BF01269C9A58006DDA1D /* differentHeight.bundle */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = differentHeight.bundle; path = ../../../js/test/differentHeight.bundle; sourceTree = "<group>"; };
+		20F5BF03269C9A5F006DDA1D /* hello.bundle */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = hello.bundle; path = ../../../js/test/hello.bundle; sourceTree = "<group>"; };
 		4E312AEDCC1A12D8E1930DE6 /* Pods-Recos.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Recos.debug.xcconfig"; path = "Target Support Files/Pods-Recos/Pods-Recos.debug.xcconfig"; sourceTree = "<group>"; };
 		DEB4624D5CE7B46BC00EEAFE /* Pods-Recos.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Recos.release.xcconfig"; path = "Target Support Files/Pods-Recos/Pods-Recos.release.xcconfig"; sourceTree = "<group>"; };
 		EF279DA44200C7FDD1CFFA77 /* Pods_Recos.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Recos.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -164,10 +164,10 @@
 		209245EE26922A7800C0DF61 /* Assets */ = {
 			isa = PBXGroup;
 			children = (
-				20F5BEFF269C8FC4006DDA1D /* differentHeight.bundle */,
+				20F5BF03269C9A5F006DDA1D /* hello.bundle */,
+				20F5BF01269C9A58006DDA1D /* differentHeight.bundle */,
 				20F5BEF2269C44BE006DDA1D /* differentHeight.tsx */,
 				2092460126922A7800C0DF61 /* hello.tsx */,
-				2092460226922A7800C0DF61 /* hello.bundle */,
 			);
 			path = Assets;
 			sourceTree = "<group>";
@@ -239,13 +239,13 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2092461526922A7800C0DF61 /* hello.bundle in Resources */,
 				209245D3269229B000C0DF61 /* LaunchScreen.storyboard in Resources */,
 				20F5BEF4269C44BE006DDA1D /* differentHeight.tsx in Resources */,
-				20F5BF00269C8FC4006DDA1D /* differentHeight.bundle in Resources */,
+				20F5BF02269C9A58006DDA1D /* differentHeight.bundle in Resources */,
 				209245D0269229B000C0DF61 /* Preview Assets.xcassets in Resources */,
 				2092461426922A7800C0DF61 /* hello.tsx in Resources */,
 				209245CD269229B000C0DF61 /* Assets.xcassets in Resources */,
+				20F5BF04269C9A5F006DDA1D /* hello.bundle in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

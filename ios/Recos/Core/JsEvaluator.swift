@@ -312,7 +312,7 @@ class JsEvaluator {
                 }
                 .if(functionDecl != nil) { content in
                     content.onTapGesture {
-                        print("点击了text")
+                        print("click text")
                         scope.parentScope?.parentScope?.parentScope?.setVar(variable: "needUpdate", value: true)
                         self.normalEval(functionDecl: functionDecl!, parentScope: scope, args: nil, selfValue: nil)
                     }
