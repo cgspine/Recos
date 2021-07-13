@@ -1,35 +1,31 @@
-function Item1(item, onItemClick){
-    // const [count, setCount] = useState(0)
+function Item1(item, onItemClick) {
     const onClick = useCallback(() => {
         onItemClick(item)
-        // setCount(count+1)
     })
 
-    return <Text style={{ color:'#000' }} onClick={ onClick }>偶数：{item.name}, {item.count}</Text>
-
+    return <Image source = {item.avatar} onClick={onClick}/>
 }
 
-function Item2(item, onItemClick){
-    // const [count, setCount] = useState(0)
+function Item2(item, onItemClick) {
     const onClick = useCallback(() => {
         onItemClick(item)
-        // setCount(count+1)
     })
 
-    return <Text style={{ color:'#000' }} onClick={ onClick }>奇数：{item.name}, {item.count}</Text>
+    return <Image source = {item.avatar} onClick={onClick}/>
 }
 
-function HelloWorld(current){
+function HelloWorld(current) {
 
     const [data, setData] = useState([])
 
     useEffect(() => {
         let ret = []
-        for(let i = 0; i < 1000; i++){
+        for (let i = 0; i < 100; i++) {
             ret.push({
                 name: 'item' + i,
                 index: i,
-                count: 0
+                count: 0,
+                avatar: 'https://upload-images.jianshu.io/upload_images/5632003-001a13276ad85eba.jpg'
             })
         }
         setData(ret)
@@ -37,12 +33,12 @@ function HelloWorld(current){
 
     let render = function (i) {
         let item = data[i]
-        if(item.index % 2 == 0){
+        if (item.index % 2 == 0) {
             return Item1(item, (it) => {
                 it.count = it.count + 1
                 setData(data)
             })
-        }else{
+        } else {
             return Item2(item, (it) => {
                 it.count = it.count + 2
                 setData(data)
@@ -50,5 +46,5 @@ function HelloWorld(current){
         }
     }
 
-    return <RecyclerView count = { data.length } render = { render }>Hello World!</RecyclerView>
+    return <RecyclerView count={data.length} render={render}>Hello World!</RecyclerView>
 }

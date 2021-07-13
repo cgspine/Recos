@@ -227,7 +227,7 @@ class JsEvaluator {
         case TYPE_JSX_ELEMENT:
             let jsxElement = node.content as! JsxElement
             var props: [String : Any?] = [:]
-            var styles = [JsObject]()
+            let resultStyle = JsObject()
             
             jsxElement.props.forEach({ item in
                 if item.value != nil {
@@ -235,8 +235,15 @@ class JsEvaluator {
                         if item.value?.type == TYPE_EXPR_EXPRESSION {
                             let sequenceExpr = item.value?.content as! SequenceExpr
                             for it in sequenceExpr.expressions {
-                                let value = parseExprValue(value: it, scope: scope)
-                                styles.append(value as! JsObject)
+                                let value = parseExprValue(value: it, scope: scope) as! JsObject
+                                value.fields.forEach { it in
+                                    resultStyle.setValue(variable: it.key, value: it.value)
+                                }
+                            }
+                        } else {
+                            let value = parseExprValue(value: item.value!, scope: scope) as! JsObject
+                            value.fields.forEach { it in
+                                resultStyle.setValue(variable: it.key, value: it.value)
                             }
                         }
                     } else {
@@ -291,19 +298,17 @@ class JsEvaluator {
                 var fontSize: Float = 0
                 var fontColor: UIColor?
                 
-                for style in styles {
-                    let value = style.getValue(variable: "height")
-                    if value != nil {
-                        height = value as! Float
-                    }
-                    let fontSizeValue = style.getValue(variable: "fontSize")
-                    if fontSizeValue != nil {
-                        fontSize = fontSizeValue as! Float
-                    }
-                    let fontColorValue = style.getValue(variable: "color")
-                    if fontColorValue != nil {
-                        fontColor = UIColor.init(hex: fontColorValue as! String)
-                    }
+                let value = resultStyle.getValue(variable: "height")
+                if value != nil {
+                    height = value as! Float
+                }
+                let fontSizeValue = resultStyle.getValue(variable: "fontSize")
+                if fontSizeValue != nil {
+                    fontSize = fontSizeValue as! Float
+                }
+                let fontColorValue = resultStyle.getValue(variable: "color")
+                if fontColorValue != nil {
+                    fontColor = UIColor.init(hex: fontColorValue as! String)
                 }
                 
                 let text = Text(string)
@@ -325,6 +330,20 @@ class JsEvaluator {
                     content.foregroundColor(Color.init(fontColor!))
                 }
                 return AnyView(text)
+            } else if jsxElement.name == "Image" {
+                var image: EvalImage?
+                jsxElement.props.forEach({ item in
+                    if item.value != nil {
+                        if item.name == "source" {
+                            let value = parseExprValue(value: item.value!, scope: scope) as! String
+                            image = EvalImage(url: value, placeholder: "placeholder")
+                            print(value)
+                        }
+                    } else {
+                        print("image is support this type")
+                    }
+                })
+                return AnyView(image)
             }
             break
         case TYPE_STATEMENT_EXPR:
@@ -695,6 +714,18 @@ class JsEvaluator {
             assert(false, "not support" + binaryData.operatorString)
         }
     }
+    
+    func fetchRemoteImage() {
+//            guard let url = URL(string: "http://hdjc8.com/images/logo.png") else { return } //初始化一个字符串常量，作为网络图片的地址
+//            URLSession.shared.dataTask(with: url){ (data, response, error) in //执行URLSession单例对象的数据任务方法，以下载指定的图片
+//                if let image = UIImage(data: data!){
+//                    self.remoteImage = image //当图片下载成功之后，将下载后的数据转换为图像，并存储在remoteImage属性中
+//                }
+//                else{
+//                    print(error ?? "") //如果图片下载失败之后，则在控制台输出错误信息
+//                }
+//            }.resume() //通过执行resume方法，开始下载指定路径的网络图片
+    }
 }
 
 class Scope {
@@ -897,6 +928,36 @@ class JsEffect {
     init(function: Function, lastValueList: JsArray?) {
         self.function = function
         self.lastValueList = lastValueList
+    }
+}
+
+struct EvalImage : View {
+    @State private var remoteImage : UIImage? = nil
+    
+    var url: String
+    var placeholder: String
+    
+    init(url: String, placeholder: String) {
+        self.url = url
+        self.placeholder = placeholder
+    }
+    
+    var body: some View {
+        let placeholderOne = UIImage(named: self.placeholder)
+        Image(uiImage: self.remoteImage ?? placeholderOne!)
+            .onAppear(perform: fetchRemoteImage)
+    }
+    
+    func fetchRemoteImage() {
+        guard let url = URL(string: self.url) else { return }
+        URLSession.shared.dataTask(with: url){ (data, response, error) in
+            if let image = UIImage(data: data!){
+                self.remoteImage = image
+            }
+            else{
+                print(error ?? "")
+            }
+        }.resume()
     }
 }
 
