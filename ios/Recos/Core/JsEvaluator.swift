@@ -294,56 +294,45 @@ class JsEvaluator {
                 
 //                print("Text: " + string)
                 let functionDecl = (props["onClick"] as? Function)?.toFunctionDecl()
-                var height: Float = 0
-                var fontSize: Float = 0
-                var fontColor: UIColor?
+                return createText(style: resultStyle, scope: scope, functionDecl: functionDecl, textString: string)
                 
-                let value = resultStyle.getValue(variable: "height")
-                if value != nil {
-                    height = value as! Float
-                }
-                let fontSizeValue = resultStyle.getValue(variable: "fontSize")
-                if fontSizeValue != nil {
-                    fontSize = fontSizeValue as! Float
-                }
-                let fontColorValue = resultStyle.getValue(variable: "color")
-                if fontColorValue != nil {
-                    fontColor = UIColor.init(hex: fontColorValue as! String)
-                }
-                
-                let text = Text(string)
-                .if(height > 0) { content in
-                    content.frame(height: CGFloat(height))
-                }
-                .if(functionDecl != nil) { content in
-                    content.onTapGesture {
-                        print("click text")
-                        scope.parentScope?.parentScope?.parentScope?.setVar(variable: "needUpdate", value: true)
-                        self.normalEval(functionDecl: functionDecl!, parentScope: scope, args: nil, selfValue: nil)
-                    }
-                }
-                .if(fontSize > 0) { content in
-                    let font = Font.system(size: CGFloat(fontSize))
-                    content.font(font)
-                }
-                .if(fontColor != nil) { content in
-                    content.foregroundColor(Color.init(fontColor!))
-                }
-                return AnyView(text)
             } else if jsxElement.name == "Image" {
                 var image: EvalImage?
+                
+                var height: Float = 0
+                var width: Float = 0
+                
+                let heightValue = resultStyle.getValue(variable: "height")
+                if heightValue != nil {
+                    height = heightValue as! Float
+                }
+                
+                let widthValue = resultStyle.getValue(variable: "width")
+                if widthValue != nil {
+                    width = widthValue as! Float
+                }
+                
                 jsxElement.props.forEach({ item in
                     if item.value != nil {
                         if item.name == "source" {
                             let value = parseExprValue(value: item.value!, scope: scope) as! String
-                            image = EvalImage(url: value, placeholder: "placeholder")
+                            image = EvalImage(url: value, placeholder: "placeholder", width: CGFloat(width), height: CGFloat(height))
                             print(value)
                         }
                     } else {
                         print("image is support this type")
                     }
                 })
+                
                 return AnyView(image)
+            } else if jsxElement.name == "View" {
+                // TODO
+                // 1. collect data
+                // 2. init flexBox
+                // 3. return flexView
+                
+            } else if jsxElement.name == "ScrollView" {
+                
             }
             break
         case TYPE_STATEMENT_EXPR:
@@ -715,16 +704,178 @@ class JsEvaluator {
         }
     }
     
-    func fetchRemoteImage() {
-//            guard let url = URL(string: "http://hdjc8.com/images/logo.png") else { return } //初始化一个字符串常量，作为网络图片的地址
-//            URLSession.shared.dataTask(with: url){ (data, response, error) in //执行URLSession单例对象的数据任务方法，以下载指定的图片
-//                if let image = UIImage(data: data!){
-//                    self.remoteImage = image //当图片下载成功之后，将下载后的数据转换为图像，并存储在remoteImage属性中
-//                }
-//                else{
-//                    print(error ?? "") //如果图片下载失败之后，则在控制台输出错误信息
-//                }
-//            }.resume() //通过执行resume方法，开始下载指定路径的网络图片
+    func createText(style: JsObject, scope: Scope, functionDecl: FunctionDecl?, textString: String) -> AnyView {
+        var backgroundColor: UIColor?
+        
+        var fontColor: UIColor?
+        var textAlign: Alignment = .leading
+        
+        // TODO
+//        var left: Float = 0
+//        var right: Float = 0
+//        var top: Float = 0
+//        var bottom: Float = 0
+        
+        var borderColor: UIColor?
+        
+        let width = style.getValue(variable: "width") as? Float ?? 0
+        let height = style.getValue(variable: "height") as? Float ?? 0
+        let lineHeight = style.getValue(variable: "lineHeight") as? Float ?? 0
+        let letterSpacing = style.getValue(variable: "letterSpacing") as? Float ?? 0
+        
+        let fontSize = style.getValue(variable: "fontSize") as? Float ?? 0
+        let fontColorValue = style.getValue(variable: "color")
+        if fontColorValue != nil {
+            fontColor = UIColor.init(hex: fontColorValue as! String)
+        }
+        
+        var fontWeight: Font.Weight = .regular
+        let fontWeightValue = style.getValue(variable: "fontWeight") as? String
+        if (fontWeightValue != nil) {
+            switch fontWeightValue! {
+            case "bold":
+                fontWeight = .bold
+            case "light":
+                fontWeight = .light
+            case "medium":
+                fontWeight = .medium
+            case "normal":
+                fontWeight = .regular
+            default:
+                fontWeight = .regular
+            }
+        }
+        
+        let backgroundColorValue = style.getValue(variable: "backgroundColor") as? String
+        if (backgroundColorValue != nil) {
+            backgroundColor = UIColor.init(hex: backgroundColorValue!)
+        }
+        
+        let paddingLeft = style.getValue(variable: "paddingLeft") as? Float ?? 0
+        let paddingRight = style.getValue(variable: "paddingRight") as? Float ?? 0
+        let paddingTop = style.getValue(variable: "paddingTop") as? Float ?? 0
+        let paddingBottom = style.getValue(variable: "paddingBottom") as? Float ?? 0
+        let paddingHorizontal = style.getValue(variable: "paddingHorizontal") as? Float ?? 0
+        let paddingVertical = style.getValue(variable: "paddingVertical") as? Float ?? 0
+        
+        let textAlignValue = style.getValue(variable: "textAlign") as? String
+        if textAlignValue != nil {
+            switch (textAlignValue!) {
+            case "auto":
+                textAlign = .leading
+                break
+            case "center":
+                textAlign = .center
+                break
+            case "right":
+                textAlign = .trailing
+            case "left":
+                textAlign = .leading
+                break
+            default:
+                textAlign = .leading
+            }
+        }
+        
+        // border
+        let borderWidth = style.getValue(variable: "borderWidth") as? Float ?? 0
+        
+        // TODO
+//        let borderTopWidth = style.getValue(variable: "borderTopWidth") as? Float ?? 0
+//        let borderRightWidth = style.getValue(variable: "borderRightWidth") as? Float ?? 0
+//        let borderBottomWidth = style.getValue(variable: "borderBttomWidth") as? Float ?? 0
+//        let borderLeftWidth = style.getValue(variable: "borderLeftWidth") as? Float ?? 0
+        
+        let borderRadius = style.getValue(variable: "borderRadius") as? Float ?? 0
+        
+        let borderColorValue = style.getValue(variable: "borderColor") as? String
+        if borderColorValue != nil {
+            borderColor = UIColor.init(hex: borderColorValue!)
+        }
+        
+        // TODO
+//        let borderTopRadius = style.getValue(variable: "borderTopRadius") as? Float ?? 0
+//        let borderRightRadius = style.getValue(variable: "borderRightRadius") as? Float ?? 0
+//        let borderBottomRadius = style.getValue(variable: "borderBottomRadius") as? Float ?? 0
+//        let borderLeftRadius = style.getValue(variable: "borderLeftRadius") as? Float ?? 0
+//        let borderTopLeftRadius = style.getValue(variable: "borderTopLeftRadius") as? Float ?? 0
+//        let borderTopRightRadius = style.getValue(variable: "borderTopRightRadius") as? Float ?? 0
+//        let borderBottomLeftRadius = style.getValue(variable: "borderBottomLeftRadius") as? Float ?? 0
+//        let borderBottomRightRadius = style.getValue(variable: "borderBottomRightRadius") as? Float ?? 0
+//
+//        var borderTopColor: UIColor?
+//        var borderRightColor: UIColor?
+//        var borderBottomColor: UIColor?
+//        var borderLeftColor: UIColor?
+//
+//        let borderTopColorValue = style.getValue(variable: "borderTopColor") as? String
+//        if borderTopColorValue != nil {
+//            borderTopColor = UIColor.init(hex: borderTopColorValue!)
+//        }
+//
+//        let borderRightColorValue = style.getValue(variable: "borderRightColor") as? String
+//        if borderRightColorValue != nil {
+//            borderRightColor = UIColor.init(hex: borderRightColorValue!)
+//        }
+//
+//        let borderBottomColorValue = style.getValue(variable: "borderBottomColor") as? String
+//        if borderBottomColorValue != nil {
+//            borderBottomColor = UIColor.init(hex: borderBottomColorValue!)
+//        }
+//
+//        let borderLeftColorValue = style.getValue(variable: "borderLeftColor") as? String
+//        if borderLeftColorValue != nil {
+//            borderLeftColor = UIColor.init(hex: borderLeftColorValue!)
+//        }
+//
+//        var shadowColor: UIColor?
+//        let shadowColorValue = style.getValue(variable: "shadowColor") as? String
+//        if shadowColorValue != nil {
+//            shadowColor = UIColor.init(hex: shadowColorValue!)
+//        }
+        
+        let text = Text(textString).kerning(CGFloat(letterSpacing)).frame(width: nil, height: nil, alignment: textAlign)
+            
+        .if(height > 0) { content in
+            content.frame(height: CGFloat(height))
+        }.if(width > 0) { content in
+            content.frame(width: CGFloat(width))
+        }.if(functionDecl != nil) { content in
+            content.onTapGesture {
+                print("click text")
+                scope.parentScope?.parentScope?.parentScope?.setVar(variable: "needUpdate", value: true)
+                self.normalEval(functionDecl: functionDecl!, parentScope: scope, args: nil, selfValue: nil)
+            }
+        }.if(fontSize > 0) { content in
+            let font = Font.system(size: CGFloat(fontSize), weight: fontWeight)
+            content.font(font)
+        }.if(fontColor != nil) { content in
+            content.foregroundColor(Color.init(fontColor!))
+        }.if(backgroundColor != nil) { content in
+            content.background(Color(backgroundColor!))
+        }.if(lineHeight > 0) { content in
+            content.lineSpacing(CGFloat(lineHeight))
+        }.if(paddingLeft > 0) { content in
+            content.padding(.leading, CGFloat(paddingLeft))
+        }.if(paddingRight > 0) { content in
+            content.padding(.trailing, CGFloat(paddingRight))
+        }.if(paddingTop > 0) { content in
+            content.padding(.top, CGFloat(paddingTop))
+        }.if(paddingBottom > 0) { content in
+            content.padding(.bottom, CGFloat(paddingBottom))
+        }.if(paddingHorizontal > 0) { content in
+            content.padding(.top, CGFloat(paddingHorizontal)).padding(.bottom, CGFloat(paddingHorizontal))
+        }.if(paddingVertical > 0) { content in
+            content.padding(.leading, CGFloat(paddingVertical)).padding(.trailing, CGFloat(paddingVertical))
+        }.if(borderWidth > 0 || borderRadius > 0) { content in
+            content.overlay(
+                RoundedRectangle(cornerRadius: CGFloat(borderRadius)).stroke(lineWidth: CGFloat(borderWidth)).if(borderColor != nil) { content in
+                    content.foregroundColor(Color(borderColor!))
+                }
+            )
+        }
+        
+        return AnyView(text)
     }
 }
 
@@ -936,16 +1087,25 @@ struct EvalImage : View {
     
     var url: String
     var placeholder: String
+    var width: CGFloat?
+    var height: CGFloat?
     
     init(url: String, placeholder: String) {
         self.url = url
         self.placeholder = placeholder
     }
     
+    init(url: String, placeholder: String, width: CGFloat, height: CGFloat) {
+        self.url = url
+        self.placeholder = placeholder
+        self.width = width
+        self.height = height
+    }
+    
     var body: some View {
         let placeholderOne = UIImage(named: self.placeholder)
-        Image(uiImage: self.remoteImage ?? placeholderOne!)
-            .onAppear(perform: fetchRemoteImage)
+        Image(uiImage: self.remoteImage ?? placeholderOne!).resizable()
+            .onAppear(perform: fetchRemoteImage).frame(width: self.width, height: self.height, alignment: .center)
     }
     
     func fetchRemoteImage() {
@@ -955,7 +1115,7 @@ struct EvalImage : View {
                 self.remoteImage = image
             }
             else{
-                print(error ?? "")
+                print(error ?? "image loading error, no error info")
             }
         }.resume()
     }
@@ -1154,3 +1314,9 @@ extension UIColor {
     }
 }
 
+struct EvalView_Previews: PreviewProvider {
+    
+    static var previews: some View {
+        EvalView(bundleName: "hello")
+    }
+}

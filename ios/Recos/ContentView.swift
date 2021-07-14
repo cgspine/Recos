@@ -22,6 +22,9 @@ struct ContentView : View {
                 NavigationLink(destination: EvalView(bundleName: "image")) {
                     Text("Image: load local image / internet image")
                 }
+                NavigationLink(destination: EvalView(bundleName: "css_style")) {
+                    Text("CSS: show all css style")
+                }
             }
             .listStyle(GroupedListStyle())
             .navigationBarTitle(Text("Recos"), displayMode: .large)

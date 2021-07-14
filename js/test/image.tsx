@@ -3,7 +3,7 @@ function Item1(item, onItemClick) {
         onItemClick(item)
     })
 
-    return <Image source = {item.avatar} onClick={onClick}/>
+    return <Image style = { {width : 200, height : 200} } source = {item.avatar} onClick={onClick}/>
 }
 
 function Item2(item, onItemClick) {
@@ -11,7 +11,10 @@ function Item2(item, onItemClick) {
         onItemClick(item)
     })
 
-    return <Image source = {item.avatar} onClick={onClick}/>
+    return <view>
+        <Text style = {{color : '#000'}}>{item.name}</Text>
+        <Image style = { {width : 200, height : 200} } source = {item.avatar} onClick={onClick}/>
+    </view>
 }
 
 function HelloWorld(current) {
