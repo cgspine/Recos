@@ -84,13 +84,41 @@ struct FlexBox: View {
     var aligenItems: AlignItems = .Center
     var flexWrap: FlexWrap = .NoWrap
     
-    init() {
-        
+    @State var jsObject: JsObject?
+    
+    init(jsObject: JsObject) {
+        self.jsObject = jsObject
     }
     
     var body: some View {
-        Text("1111")
+        Text("111")
     }
+    
+    func flexBoxEngine(superStyle: JsObject, subStyles: [JsObject]) -> Void {
+        // 获取父类frame
+        let width = superStyle.getValue(variable: "width") as? Float ?? 0
+        let height = superStyle.getValue(variable: "height") as? Float ?? 0
+        let x = 0
+        let y = 0
+        let superFrame = CGRect(x: CGFloat(x), y: CGFloat(y), width: CGFloat(width), height: CGFloat(height))
+        for index in 0...subStyles.count {
+            flexBoxEngineForEach(superStyle: superStyle, subStyle: subStyles[index], index: index, superFrame: superFrame)
+        }
+    }
+    
+    func flexBoxEngineForEach(superStyle: JsObject, subStyle: JsObject, index: Int, superFrame: CGRect) -> Void {
+        
+        var flexDirection: FlexDirection = superStyle.getValue(variable: "flexDirection") as? FlexDirection ?? .Row
+        var justifyContent: JustifyContent = superStyle.getValue(variable: "justifyContent") as? JustifyContent ?? .Center
+        
+        // 获取frame
+        
+        // 计算frame
+        
+        // 返回frame
+        
+    }
+
 }
 
 class FlexItemData {

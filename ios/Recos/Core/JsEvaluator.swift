@@ -273,20 +273,20 @@ class JsEvaluator {
                     return AnyView(list)
                 }
             } else if jsxElement.name == "Text" {
-                var string = String()
+                var textString = String()
                 jsxElement.children.forEach { item in
                     if item.type == TYPE_JSX_TEXT {
                         let jsxText = item.content as! JsxText
-                        string.append(jsxText.text)
+                        textString.append(jsxText.text)
                     } else {
                         let value = parseExprValue(value: item, scope: scope)
                         if (value != nil) {
                             if value is Float {
-                                string.append(String(value as! Float))
+                                textString.append(String(value as! Float))
                             } else if value is Int {
-                                string.append(String(value as! Int))
+                                textString.append(String(value as! Int))
                             } else {
-                                string.append(value as! String)
+                                textString.append(value as! String)
                             }
                         }
                     }
@@ -294,23 +294,12 @@ class JsEvaluator {
                 
 //                print("Text: " + string)
                 let functionDecl = (props["onClick"] as? Function)?.toFunctionDecl()
-                return createText(style: resultStyle, scope: scope, functionDecl: functionDecl, textString: string)
+                return createText(style: resultStyle, scope: scope, functionDecl: functionDecl, textString: textString)
                 
             } else if jsxElement.name == "Image" {
                 var image: EvalImage?
-                
-                var height: Float = 0
-                var width: Float = 0
-                
-                let heightValue = resultStyle.getValue(variable: "height")
-                if heightValue != nil {
-                    height = heightValue as! Float
-                }
-                
-                let widthValue = resultStyle.getValue(variable: "width")
-                if widthValue != nil {
-                    width = widthValue as! Float
-                }
+                let height = resultStyle.getValue(variable: "height") as? Float ?? 0
+                let width = resultStyle.getValue(variable: "width") as? Float ?? 0
                 
                 jsxElement.props.forEach({ item in
                     if item.value != nil {
@@ -325,11 +314,36 @@ class JsEvaluator {
                 })
                 
                 return AnyView(image)
+            } else if jsxElement.name == "Button" {
+                var textString = String()
+                jsxElement.children.forEach { item in
+                    if item.type == TYPE_JSX_TEXT {
+                        let jsxText = item.content as! JsxText
+                        textString.append(jsxText.text)
+                    } else {
+                        let value = parseExprValue(value: item, scope: scope)
+                        if (value != nil) {
+                            if value is Float {
+                                textString.append(String(value as! Float))
+                            } else if value is Int {
+                                textString.append(String(value as! Int))
+                            } else {
+                                textString.append(value as! String)
+                            }
+                        }
+                    }
+                }
+                
+                let functionDecl = (props["onPress"] as? Function)?.toFunctionDecl()
+                return createButton(style: resultStyle, scope: scope, functionDecl: functionDecl, textString: textString)
+                
             } else if jsxElement.name == "View" {
                 // TODO
                 // 1. collect data
                 // 2. init flexBox
                 // 3. return flexView
+                
+                return AnyView(FlexBox(jsObject: resultStyle))
                 
             } else if jsxElement.name == "ScrollView" {
                 
@@ -704,6 +718,44 @@ class JsEvaluator {
         }
     }
     
+    func createButton(style: JsObject, scope: Scope, functionDecl: FunctionDecl?, textString: String) -> AnyView {
+        
+        var backgroundColor: UIColor?
+        let backgroundColorValue = style.getValue(variable: "backgroundColor") as? String
+        if (backgroundColorValue != nil) {
+            backgroundColor = UIColor.init(hex: backgroundColorValue!)
+        }
+        
+        var fontColor: UIColor?
+        let fontColorValue = style.getValue(variable: "color")
+        if fontColorValue != nil {
+            fontColor = UIColor.init(hex: fontColorValue as! String)
+        }
+        
+        let width = style.getValue(variable: "width") as? Float ?? 0
+        let height = style.getValue(variable: "height") as? Float ?? 0
+        
+        let button = Button(action: {
+            if (functionDecl != nil) {
+                print("click button")
+                scope.parentScope?.parentScope?.parentScope?.setVar(variable: "needUpdate", value: true)
+                self.normalEval(functionDecl: functionDecl!, parentScope: scope, args: nil, selfValue: nil)
+            }
+        }) {
+            Text(textString)
+        }.if(height > 0) { content in
+            content.frame(height: CGFloat(height))
+        }.if(width > 0) { content in
+            content.frame(width: CGFloat(width))
+        }.if(backgroundColor != nil) { content in
+            content.background(Color(backgroundColor!))
+        }.if(fontColor != nil) { content in
+            content.foregroundColor(Color(fontColor!))
+        }
+        
+        return AnyView(button)
+    }
+    
     func createText(style: JsObject, scope: Scope, functionDecl: FunctionDecl?, textString: String) -> AnyView {
         var backgroundColor: UIColor?
         
@@ -711,10 +763,10 @@ class JsEvaluator {
         var textAlign: Alignment = .leading
         
         // TODO
-//        var left: Float = 0
-//        var right: Float = 0
-//        var top: Float = 0
-//        var bottom: Float = 0
+//        let left = style.getValue(variable: "left") as? Float ?? 0
+//        let right = style.getValue(variable: "right") as? Float ?? 0
+//        let top = style.getValue(variable: "top") as? Float ?? 0
+//        let bottom = style.getValue(variable: "bottom") as? Float ?? 0
         
         var borderColor: UIColor?
         
