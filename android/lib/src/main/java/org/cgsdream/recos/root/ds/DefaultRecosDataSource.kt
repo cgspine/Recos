@@ -9,79 +9,79 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.decodeFromJsonElement
 import org.cgsdream.recos.root.bundle.BundleProvider
-import org.cgsdream.recos.root.util.ConcurrencyShare
+import org.cgsdream.recos.root.js.*
+import org.cgsdream.recos.root.cls.JsColsole
+import org.cgsdream.recos.root.cls.ClsProvider
 import java.util.concurrent.ConcurrentHashMap
 
-class DefaultRecosDataSource(val bundleProvider: BundleProvider): RecosDataSource {
-
-    private val functionList = ConcurrentHashMap<String, FunctionDecl>()
+class DefaultRecosDataSource(val bundleProvider: BundleProvider,
+                             val clsProvider: ClsProvider? = null): RecosDataSource {
     private val waitingChannel = ConcurrentHashMap<String, ArrayList<SendChannel<FunctionDecl>>>()
     private val loadedBundle = mutableSetOf<String>()
-    private val concurrencyShare = ConcurrencyShare()
     private val mutex = Mutex()
+    private val globalStackFrame = JsStackFrame(null)
+    private val dummyJsEvaluator = JsEvaluator(DummyRecosDataSource(globalStackFrame.scope))
+
+    override val rootScope: JsScope = globalStackFrame.scope
 
     override suspend fun parse(bundleName: String) {
         if(loadedBundle.contains(bundleName)){
             return
         }
-        concurrencyShare.joinPreviousOrRun("parse_${bundleName}"){
+        mutex.withLock {
+            if(loadedBundle.contains(bundleName)){
+                return
+            }
             withContext(Dispatchers.IO){
                 val text = bundleProvider.getBundleContent(bundleName)
                 val ret: List<Node> = Json.decodeFromString(text)
-                ret.forEach {
-                    if(it.type == TYPE_DECL_FUNC){
-                        val func = Json.decodeFromJsonElement<FunctionDecl>(it.content)
-                        mutex.withLock {
-                            functionList[func.name] = func
-                            waitingChannel[func.name]?.forEach {  channel ->
-                                channel.send(func)
-                            }
-                        }
-                    }else{
-                        throw RuntimeException("Not support global var or program")
+                ret.forEach { node ->
+                    dummyJsEvaluator.runNode(globalStackFrame, rootScope, node)
+                }
+            }
+            loadedBundle.add(bundleName)
+            waitingChannel.keys.forEach { name ->
+                rootScope.getFunction(name)?.let { func ->
+                    waitingChannel[name]?.forEach {  channel ->
+                        channel.send(func)
                     }
                 }
             }
         }
-        mutex.withLock {
-            loadedBundle.add(bundleName)
+    }
+
+    override fun getMemberProvider(name: String): JsMemberProvider? {
+        if(name == "console"){
+            return JsColsole()
         }
+        return clsProvider?.provide(name)
     }
 
-    override fun getExitModule(moduleName: String): FunctionDecl? {
-        return functionList[moduleName]
-    }
-
-    override suspend fun getModuleAndWait(moduleName: String): FunctionDecl {
-        val exist = functionList[moduleName]
+    override suspend fun getEntranceFunction(functionName: String): FunctionDecl {
+        val exist = rootScope.getFunction(functionName)
         if(exist != null){
             return exist
         }
         val channel = Channel<FunctionDecl>(1, BufferOverflow.DROP_OLDEST)
         val ret = mutex.withLock {
-            val exist1 = functionList[moduleName]
+            val exist1 = rootScope.getFunction(functionName)
             if(exist1 != null){
                 return@withLock exist1
             }
-            val list = waitingChannel[moduleName]
+            val list = waitingChannel[functionName]
             if(list != null){
                 list.add(channel)
             }else{
                 val toPut = arrayListOf<SendChannel<FunctionDecl>>()
-                val old = waitingChannel.putIfAbsent(moduleName, toPut)
+                val old = waitingChannel.putIfAbsent(functionName, toPut)
                 old?.add(channel)
             }
             null
         }
         return if(ret == null){
             val value = channel.receive()
-            waitingChannel[moduleName]?.let { list ->
-                mutex.withLock {
-                    list.remove(channel)
-                }
-            }
+            waitingChannel.remove(functionName)
             channel.close()
             value
         }else{

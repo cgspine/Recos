@@ -38,6 +38,9 @@ console.log(JSON.stringify(sourceContent.program.body))
 fs.writeFileSync(output, JSON.stringify(ret))
 
 function parse(input){
+    if(input == null){
+        return null
+    }
     if(Array.isArray(input)){
         let ret = Array(input.length)
         for(let i = 0; i < input.length; i++){

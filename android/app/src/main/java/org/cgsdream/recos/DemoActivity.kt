@@ -1,11 +1,15 @@
 package org.cgsdream.recos
 
 import android.os.Bundle
+import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.GridCells
+import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -22,10 +26,11 @@ class DemoActivity : AppCompatActivity() {
     private lateinit var pageRootLayout: ComposeView
     private lateinit var page: RecosPage
 
+    @ExperimentalFoundationApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         pageRootLayout = ComposeView(this)
-        page = RecosPage(recosDataSource, "hello.bundle", "HelloWorld")
+        page = RecosPage(recosDataSource, "waterfall.bundle", "Waterfall")
         page.attach(pageRootLayout)
         setContentView(pageRootLayout)
         lifecycle.addObserver(page)

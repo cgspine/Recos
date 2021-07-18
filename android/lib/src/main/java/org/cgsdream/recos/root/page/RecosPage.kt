@@ -31,10 +31,10 @@ class RecosPage(val dataSource: RecosDataSource,
                 Log.i("cgine", e.stackTraceToString())
             }
 
-            val data = dataSource.getModuleAndWait(moduleName)
+            val data = dataSource.getEntranceFunction(moduleName)
             pageData = data
             composeView?.setContent {
-                jsEvaluator.Eval(functionDecl = data)
+                jsEvaluator.Eval(functionDecl = data.toJsFunctionDecl(null))
             }
         }
     }
@@ -43,7 +43,7 @@ class RecosPage(val dataSource: RecosDataSource,
         this.composeView = composeView
         pageData?.let {
             composeView.setContent {
-                jsEvaluator.Eval(functionDecl = it)
+                jsEvaluator.Eval(functionDecl = it.toJsFunctionDecl())
             }
         }
     }

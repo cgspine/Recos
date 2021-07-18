@@ -3,6 +3,7 @@ package org.cgsdream.recos.root.ds
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
+import org.cgsdream.recos.root.js.JsScope
 
 const val TYPE_DECL_FUNC = 10
 const val TYPE_DECL_VAR = 11
@@ -42,9 +43,13 @@ data class Node(
     val content: JsonElement
 )
 
-interface Function {
-    fun toFunctionDecl(): FunctionDecl
-}
+class JsFunctionDecl(
+    val name: String,
+    val param: List<Node>? = null,
+    val body: Node,
+    val parentScope: JsScope? = null,
+    val isRecosComponent: Boolean = false
+)
 
 @Serializable
 data class FunctionDecl(
@@ -58,9 +63,9 @@ data class FunctionDecl(
     val param: List<Node>? = null,
     @Serializable
     val body: Node
-): Function {
-    override fun toFunctionDecl(): FunctionDecl {
-        return this
+){
+    fun toJsFunctionDecl(scope: JsScope? = null): JsFunctionDecl {
+        return JsFunctionDecl(name, param, body, scope, name[0].isUpperCase())
     }
 }
 
@@ -74,9 +79,10 @@ data class FunctionExpr(
     val params: List<Node>? = null,
     @Serializable
     val body: Node
-): Function {
-    override fun toFunctionDecl(): FunctionDecl {
-        return FunctionDecl("FunctionExpr", async, generator, params, body)
+) {
+
+    fun toJsFunctionDecl(scope: JsScope? = null): JsFunctionDecl {
+        return JsFunctionDecl("FunctionExpr", params, body, scope)
     }
 }
 
@@ -86,9 +92,10 @@ data class FunctionArrayExpr(
     val params: List<Node>? = null,
     @Serializable
     val body: Node
-): Function {
-    override fun toFunctionDecl(): FunctionDecl {
-        return FunctionDecl("FunctionArrayExpr", false, false, params, body)
+) {
+
+    fun toJsFunctionDecl(scope: JsScope? = null): JsFunctionDecl {
+        return JsFunctionDecl("FunctionArrayExpr", params, body, scope)
     }
 }
 
@@ -135,7 +142,7 @@ data class BinaryData(
     @Serializable
     val operator: String,
     @Serializable
-    val right: Node?
+    val right: Node? = null
 )
 
 @Serializable
@@ -163,7 +170,7 @@ data class ObjectProperty(
     @Serializable
     val key: Node,
     @Serializable
-    val value: Node
+    val value: Node? = null
 )
 
 @Serializable
@@ -214,7 +221,7 @@ data class IfStatement(
     @Serializable
     val consequent: Node,
     @Serializable
-    val alternate: Node
+    val alternate: Node? = null
 )
 
 @Serializable

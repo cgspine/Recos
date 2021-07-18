@@ -1,23 +1,39 @@
+
+let HelloWordStyleSheet = {
+    textStyle: {
+        color: '#ff0000',
+        fontSize: 16,
+        paddingLeft: 12,
+        paddingTop: 12,
+        paddingBottom: 12
+    }
+
+}
+
 function Item1(item, onItemClick) {
     const onClick = useCallback(() => {
         onItemClick(item)
     })
 
-    return <Text style={{ color: '#fff' }} onClick={onClick}>Even: {item.name}, {item.count}</Text>
+    return <Text style={HelloWordStyleSheet.textStyle} onClick={onClick}>Even: {item.name}, {item.count}</Text>
 
 }
+
 
 function Item2(item, onItemClick) {
     const onClick = useCallback(() => {
         onItemClick(item)
     })
 
-    return <Text style={{ color: '#fff' }} onClick={onClick}>Odd: {item.name}, {item.count}</Text>
+    return <Text style={HelloWordStyleSheet.textStyle} onClick={onClick}>Odd: {item.name}, {item.count}</Text>
 }
+
 
 function HelloWorld(current) {
 
     const [data, setData] = useState([])
+
+    console.log("HelloWorld", "test")
 
     useEffect(() => {
         let ret = []
