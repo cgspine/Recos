@@ -21,6 +21,8 @@ const val TYPE_EXPR_FUNCTION = 107
 const val TYPE_EXPR_ID = 108
 const val TYPE_EXPR_ARRAY_FUNCTION = 109
 const val TYPE_EXPR_ASSIGN = 110
+const val TYPE_EXPR_SEQUENCE = 111
+const val TYPE_EXPR_UNARY = 112
 
 
 const val TYPE_STATEMENT_BLOCK = 200
@@ -143,6 +145,14 @@ data class BinaryData(
     val operator: String,
     @Serializable
     val right: Node? = null
+)
+
+@Serializable
+data class UnaryData(
+    @Serializable
+    val operator: String,
+    @Serializable
+    val argument: Node
 )
 
 @Serializable

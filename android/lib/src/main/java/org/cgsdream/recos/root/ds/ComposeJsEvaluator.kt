@@ -212,9 +212,6 @@ class JsEvaluator(val dataSource: RecosDataSource) {
         }
     }
 
-    companion object {
-
-    }
     fun parseExprValue(value: Node?, frame: JsStackFrame, scope: JsScope): Any? {
         if (value == null) {
             return null
@@ -241,6 +238,9 @@ class JsEvaluator(val dataSource: RecosDataSource) {
             }
             TYPE_EXPR_BINARY -> {
                 return binaryCalculate(scope, frame, Json.decodeFromJsonElement(value.content))
+            }
+            TYPE_EXPR_UNARY -> {
+                return unaryCalculate(scope, frame, Json.decodeFromJsonElement(value.content))
             }
             TYPE_EXPR_ID -> {
                 val name = Json.decodeFromJsonElement<IdInfo>(value.content).name
@@ -391,6 +391,16 @@ class JsEvaluator(val dataSource: RecosDataSource) {
         return null
     }
 
+    private fun unaryCalculate(scope: JsScope, frame: JsStackFrame, unaryData: UnaryData): Any?{
+        return when(unaryData.operator){
+            "!" -> {
+                parseExprValue(unaryData.argument, frame, scope).checkForJsValue() != true
+            }
+            else -> {
+                throw RuntimeException("not support: ${unaryData.operator}")
+            }
+        }
+    }
 
     private fun binaryCalculate(scope: JsScope, frame: JsStackFrame, binaryData: BinaryData): Any? {
         val leftValue = parseExprValue(binaryData.left, frame, scope).checkForJsValue()

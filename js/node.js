@@ -14,7 +14,8 @@ const TYPE_EXPR_FUNCTION = 107
 const TYPE_EXPR_ID = 108
 const TYPE_EXPR_ARRAY_FUNCTION = 109
 const TYPE_EXPR_ASSIGN = 110
-const TYPE_EXPR_Sequence = 111
+const TYPE_EXPR_SEQUENCE = 111
+const TYPE_EXPR_UNARY = 112
 
 
 const TYPE_STATEMENT_BLOCK = 200
@@ -252,9 +253,19 @@ exports.createJSXText = function (value){
 
 exports.createSequenceExpr = function (value) {
     return {
-        type: TYPE_EXPR_Sequence,
+        type: TYPE_EXPR_SEQUENCE,
         content: {
             expression: value
+        }
+    }
+}
+
+exports.createUnaryExpr = function (operator, arg) {
+    return {
+        type: TYPE_EXPR_UNARY,
+        content: {
+            operator: operator,
+            argument: arg
         }
     }
 }

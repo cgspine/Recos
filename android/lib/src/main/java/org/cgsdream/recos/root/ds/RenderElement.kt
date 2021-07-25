@@ -1,6 +1,8 @@
 package org.cgsdream.recos.root.ds
 
 import android.util.Log
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollable
@@ -114,6 +116,13 @@ class JsxRenderElement(
                             }
                         }
                     }
+                }
+            }
+            "Crossfade" -> {
+                val targetState = props["targetState"]
+                val content = props["content"] as? JsFunctionDecl ?: return
+                Crossfade(targetState = targetState, animationSpec = tween(500)) {
+                    jsEvaluator.Eval(content, listOf(it))
                 }
             }
             "View" -> {

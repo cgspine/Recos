@@ -1,3 +1,5 @@
+import {Crossfade, StaggeredVerticalGrid, Text, useEffect, useState, View} from "../lib";
+
 let WaterFallStyleSheet = {
 
     loadingCnt: {
@@ -67,7 +69,7 @@ function Cell(data) {
     }
     return <View
         style={WaterFallStyleSheet.cell}>
-        <Image src={data.url} style={WaterFallStyleSheet.img} />
+        <Image src={data.url} style={WaterFallStyleSheet.img}/>
         <Text style={WaterFallStyleSheet.title}>{data.title}</Text>
         <Text style={WaterFallStyleSheet.detail}>{data.detail}</Text>
         <View style={WaterFallStyleSheet.tagContainer}>
@@ -81,14 +83,14 @@ function Waterfall() {
 
     useEffect(() => {
         let ret = []
-        for (let i = 0; i < 200; i++) {
+        for (let i = 0; i < 1000; i++) {
             let detail = ""
             let remain = i % 3
-            if(remain == 0){
+            if (remain == 0) {
                 detail = "This is a long long long long long long long long long long long long long long long long sentence"
-            }else if(remain == 1){
+            } else if (remain == 1) {
                 detail = "this is a normal normal normal normal normal normal sentence"
-            }else{
+            } else {
                 detail = "this is a short sentence"
             }
             ret.push({
@@ -106,11 +108,17 @@ function Waterfall() {
         return Cell(item)
     }
 
-    if(data.length == 0){
-        return <View style={WaterFallStyleSheet.loadingCnt}>
-            <Text> loading... </Text>
-        </View>
+    let pageContent = function (targetState) {
+        if (!targetState) {
+            return <View style={WaterFallStyleSheet.loadingCnt}>
+                <Text> loading... </Text>
+            </View>
+        }
+        return <StaggeredVerticalGrid style={WaterFallStyleSheet.layout}
+                                      spanCount={2}
+                                      count={data.length}
+                                      render={render}/>
     }
 
-    return <StaggeredVerticalGrid style={WaterFallStyleSheet.layout} spanCount={2} count={data.length} render={render}/>
+    return <Crossfade targetState={data.length > 0} content={pageContent}/>
 }

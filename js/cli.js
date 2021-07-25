@@ -34,7 +34,7 @@ let sourceContent = babelParser.parse(content, {
     ]
 })
 let ret = parse(sourceContent.program.body)
-console.log(JSON.stringify(sourceContent.program.body))
+// console.log(JSON.stringify(sourceContent.program.body))
 fs.writeFileSync(output, JSON.stringify(ret))
 
 function parse(input){
@@ -124,6 +124,10 @@ function parse(input){
             ret[i] = parse(expr)
         }
         return node.createSequenceExpr(ret)
+    }else if(input.type === 'UnaryExpression'){
+        return node.createUnaryExpr(input.operator, parse(input.argument))
+    }else {
+        return null
     }
 }
 

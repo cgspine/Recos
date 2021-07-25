@@ -1,3 +1,4 @@
+import {RecyclerView, Text, useCallback, useEffect, useState} from "../lib";
 
 let HelloWordStyleSheet = {
     textStyle: {
@@ -13,7 +14,7 @@ let HelloWordStyleSheet = {
 function Item1(item, onItemClick) {
     const onClick = useCallback(() => {
         onItemClick(item)
-    })
+    }, [item])
 
     return <Text style={HelloWordStyleSheet.textStyle} onClick={onClick}>Even: {item.name}, {item.count}</Text>
 
@@ -23,7 +24,7 @@ function Item1(item, onItemClick) {
 function Item2(item, onItemClick) {
     const onClick = useCallback(() => {
         onItemClick(item)
-    })
+    }, [])
 
     return <Text style={HelloWordStyleSheet.textStyle} onClick={onClick}>Odd: {item.name}, {item.count}</Text>
 }

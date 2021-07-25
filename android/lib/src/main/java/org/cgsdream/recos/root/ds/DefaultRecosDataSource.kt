@@ -1,5 +1,6 @@
 package org.cgsdream.recos.root.ds
 
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
@@ -35,9 +36,11 @@ class DefaultRecosDataSource(val bundleProvider: BundleProvider,
             }
             withContext(Dispatchers.IO){
                 val text = bundleProvider.getBundleContent(bundleName)
-                val ret: List<Node> = Json.decodeFromString(text)
+                val ret: List<Node?> = Json.decodeFromString(text)
                 ret.forEach { node ->
-                    dummyJsEvaluator.runNode(globalStackFrame, rootScope, node)
+                    if(node != null){
+                        dummyJsEvaluator.runNode(globalStackFrame, rootScope, node)
+                    }
                 }
             }
             loadedBundle.add(bundleName)
