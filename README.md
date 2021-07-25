@@ -1,3 +1,5 @@
+![Recos](imgs/logo.png)
+
 # Recos - experimental ts/jsx to Android Compose/SwiftUI compiler
 
 This repository contains an early prototype of Recos, an experimental compiler, which would compile tx/jsx into Android Jetpack Compose and iOS SwiftUI.
@@ -13,8 +15,10 @@ The main goal of Recos is to help us building high performance cross-platform mo
 
 Before starting this 101 tutorial, make sure our system have installed [node](https://nodejs.org/en/), and suppose we are using macOS, we may consider install it via [brew](https://formulae.brew.sh/formula/node):
 
-> brew install node
-> npm install getopts --save
+```
+brew install node
+npm install getopts --save
+```
 
 For the Android side, in order to make Jetpack Compose works, we must use [Android Studio Preview version](https://developer.android.com/studio/preview) in this moment.
 
