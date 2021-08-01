@@ -1,4 +1,4 @@
-import {RecyclerView, Text, useCallback, useEffect, useState} from "../lib";
+import {RecyclerView, Text, useCallback, useEffect, useState} from "../../../lib/index";
 
 let HelloWordStyleSheet = {
     textStyle: {

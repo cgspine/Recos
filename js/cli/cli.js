@@ -3,9 +3,11 @@
 // node cli.js -s ./test/hello.tsx -o ./test/hello.bundle
 
 const fs = require('fs')
+const path = require('path')
 const getopts = require('getopts')
 const babelParser = require('@babel/parser')
 const node = require('./node')
+const md5 = require('md5')
 
 
 let options = getopts(process.argv.slice(2), {
@@ -26,15 +28,22 @@ if (help) {
     return
 }
 
-let content = fs.readFileSync(source, 'utf8')
-let sourceContent = babelParser.parse(content, {
-    sourceType: "module",
-    plugins: [
-        "jsx",
-    ]
-})
+
+
+function parseFile(sourcePath) {
+    let content = fs.readFileSync(sourcePath, 'utf8')
+    let sourceContent = babelParser.parse(content, {
+        sourceType: "module",
+        plugins: [
+            "jsx",
+        ]
+    })
+    return parse(sourceContent.program.body)
+}
+
+
 let ret = parse(sourceContent.program.body)
-// console.log(JSON.stringify(sourceContent.program.body))
+console.log(JSON.stringify(sourceContent.program.body))
 fs.writeFileSync(output, JSON.stringify(ret))
 
 function parse(input){

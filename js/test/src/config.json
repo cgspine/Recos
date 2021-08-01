@@ -1,0 +1,4 @@
+{
+  "hello": "./src/hello/index.tsx",
+  "waterfall": "./src/hello/index.tsx"
+}

@@ -1,17 +1,14 @@
 {
-  "name": "recos",
-  "version": "1.0.0",
+  "name": "Recos",
+  "version": "0.0.1",
   "description": "",
-  "main": "index.js",
+  "main": "index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@babel/parser": "^7.14.2",
-    "@babel/plugin-syntax-jsx": "^7.12.13",
-    "getopts": "^2.3.0"
   },
   "devDependencies": {
     "@babel/types": "^7.14.5"

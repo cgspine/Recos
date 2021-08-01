@@ -1,4 +1,4 @@
-import {Crossfade, StaggeredVerticalGrid, Text, useEffect, useState, View} from "../lib";
+import {Crossfade, StaggeredVerticalGrid, Text, useEffect, useState, View} from 'Recos';
 
 let WaterFallStyleSheet = {
 
@@ -78,7 +78,7 @@ function Cell(data) {
     </View>
 }
 
-function Waterfall() {
+export function Waterfall() {
     const [data, setData] = useState([])
 
     useEffect(() => {

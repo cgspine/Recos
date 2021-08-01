@@ -1,0 +1,22 @@
+{
+  "name": "recos-cli",
+  "version": "1.0.0",
+  "description": "",
+  "bin": {
+    "recos-cli": "cli.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@babel/parser": "^7.14.2",
+    "@babel/plugin-syntax-jsx": "^7.12.13",
+    "getopts": "^2.3.0",
+    "md5": "^2.3.0"
+  },
+  "devDependencies": {
+    "@babel/types": "^7.14.5"
+  }
+}
