@@ -77,17 +77,18 @@ internal class FlexItemOrderModifier {
 }
 
 struct FlexBox: View {
-    
     var display: Display = .flex
     var flexDirection: FlexDirection = .Row
     var justifyContent: JustifyContent = .Center
     var aligenItems: AlignItems = .Center
     var flexWrap: FlexWrap = .NoWrap
     
+    @State var evaluator: JsEvaluator
     @State var jsObject: JsObject?
     
-    init(jsObject: JsObject) {
+    init(jsObject: JsObject, evaluator: JsEvaluator) {
         self.jsObject = jsObject
+        self.evaluator = evaluator
     }
     
     var body: some View {
@@ -95,7 +96,7 @@ struct FlexBox: View {
     }
     
     func flexBoxEngine(superStyle: JsObject, subStyles: [JsObject]) -> Void {
-        // 获取父类frame
+        // get super frame
         let width = superStyle.getValue(variable: "width") as? Float ?? 0
         let height = superStyle.getValue(variable: "height") as? Float ?? 0
         let x = 0
@@ -107,7 +108,6 @@ struct FlexBox: View {
     }
     
     func flexBoxEngineForEach(superStyle: JsObject, subStyle: JsObject, index: Int, superFrame: CGRect) -> Void {
-        
         var flexDirection: FlexDirection = superStyle.getValue(variable: "flexDirection") as? FlexDirection ?? .Row
         var justifyContent: JustifyContent = superStyle.getValue(variable: "justifyContent") as? JustifyContent ?? .Center
         
@@ -126,6 +126,9 @@ class FlexItemData {
 }
 
 struct RecosFlexBoxView<Item, Content> : View where Item: Hashable, Content: View {
+//    @State var evaluator: JsEvaluator
+//    @State var jsObject: JsObject?
+    
     let alignment: Alignment
     let spacing: CGFloat
     let items: [Item]
@@ -182,9 +185,11 @@ struct RecosFlexBoxView<Item, Content> : View where Item: Hashable, Content: Vie
         guard let widthBody = self.sizeBody?.width else {
             return self.items.indices.map { [ $0 ] }
         }
+        
         var rowWidth: CGFloat = 0
         var rowItems: [Int] = []
         var rows: [[Int]] = []
+        
         for index in 0 ..< items.count {
             if  let widthItem = self.widthItems[self.items[index]] {
                 let rowWidthNext = rowWidth + widthItem + (rowItems.isEmpty ? 0 : self.spacing)
@@ -220,27 +225,158 @@ struct RecosFlexBoxView<Item, Content> : View where Item: Hashable, Content: Vie
     }
 }
 
-struct TestText : View {
-    let text: String
-    @State private var color: Bool = false
+struct CustomFlexBoxView<Content> : View where Content: View {
+    let alignment: Alignment
+    let spacing: CGFloat
+    let content: [Content]
+    @State private var sizeBody: CGSize? = nil
+    @State private var sizeItems: [Int : CGSize] = [:]
+    
+    init(alignment: Alignment = .center, spacing: CGFloat = 0, content: [Content]) {
+        self.spacing = spacing
+        self.alignment = alignment
+        self.content = content
+    }
+    
     var body: some View {
-        Text(self.text)
-            .lineLimit(1)
-            .fixedSize()
-            .background(self.color ? Color.orange : Color.gray)
-            .foregroundColor(self.color ? Color.green : Color.black)
-            .onTapGesture {
-                self.color.toggle()
+        GeometryReader { (geo) in
+            if let sizeBody = self.sizeBody {
+                self.contentView(sizeBody: sizeBody)
             }
+            else {
+                self.contentFirstView
+                    .onAppear {
+                        self.sizeBody = geo.frame(in: .global).size
+                    }
+            }
+        }
+    }
+    
+    private var contentFirstView: some View {
+        let items = self.content
+        return VStack(spacing: 0) {
+            ForEach(0 ..< items.count) { (index) in
+                HStack(spacing: 0) {
+                    items[index]
+                }
+                .background(
+                    GeometryReader { (geo) in
+                        Color.clear.onAppear {
+                            self.sizeItems[index] = geo.frame(in: .global).size
+                        }
+                    }
+                )
+            }
+        }
+    }
+    
+    private func contentView(sizeBody: CGSize) -> some View {
+        let items = self.content
+        var rowWidth: CGFloat = 0
+        var rowItems: [Content] = []
+        var rows: [AnyView] = []
+        for index in 0 ..< items.count {
+            if let size = self.sizeItems[index] {
+                if rowWidth + size.width + self.spacing <= sizeBody.width {
+                    let addSpacing = (rowItems.isEmpty ? 0 : self.spacing)
+                    rowItems.append(items[index])
+                    rowWidth = rowWidth + size.width  + addSpacing
+                }
+                else {
+                    if rowItems.isEmpty == false {
+                        rows.append(
+                            AnyView(
+                                self.createRow(items: rowItems)
+                            )
+                        )
+                        rowWidth = 0
+                        rowItems = []
+                    }
+                    rowWidth = size.width
+                    rowItems = [ items[index] ]
+                }
+            }
+            else {
+                if rowItems.isEmpty == false {
+                    rows.append(
+                        AnyView(
+                            self.createRow(items: rowItems)
+                        )
+                    )
+                    rowWidth = 0
+                    rowItems = []
+                }
+                rows.append(AnyView(items[index]))
+            }
+        }
+        if rowItems.isEmpty == false {
+            rows.append(
+                AnyView(
+                    self.createRow(items: rowItems)
+                )
+            )
+            rowWidth = 0
+            rowItems = []
+        }
+        return AnyView (
+            VStack(alignment: self.alignment.horizontal, spacing: self.spacing) {
+                ForEach(0 ..< rows.count) { ind in
+                    rows[ind]
+                }
+            }
+        )
+    }
+    
+    private func createRow(items: [Content]) -> some View {
+        HStack(alignment: self.alignment.vertical, spacing: self.spacing) { [items] in
+            ForEach(0 ..< items.count) { ind in
+                items[ind]
+            }
+        }
     }
 }
 
-//struct TABContentView: View {
-//    @State var data: [Int] = [
-//        113, 2, 2342343, 234, 234234234234324, 3,
-//        45345435345345, 545, 34, 4, 345345345, 45345, 5, 5
-//    ]
-//    var body: some View {
-//
-//    }
-//}
+struct RecosContentView: View {
+    @State var data: [String] = [
+        "113", "2", "2342343", "234", "234234234234324", "3",
+        "45345435345345", "545", "34", "4", "345345345", "45345", "5", "5"]
+    
+    var body: some View {
+        ScrollView {
+            RecosFlexBoxView(alignment: .topLeading, spacing: 10, items: data, content: self.getAnyView(index:))
+        }
+        .padding()
+    }
+    
+    func getContent(index: Int) -> TestText {
+        let text = String(self.data[index])
+        return TestText(text: text)
+    }
+    
+    func getAnyView(index: Int) -> AnyView {
+        let text = String(self.data[index])
+        return AnyView(TestText(text: text))
+    }
+}
+
+struct TestText : View {
+    let text: String
+    @State private var color: Bool = false
+    
+    var body: some View {
+        VStack {
+            EvalImage(url: "", placeholder: "placeholder", width: 100, height: 100)
+            Text(self.text)
+                .lineLimit(1)
+                .fixedSize()
+                .background(self.color ? Color.orange : Color.gray)
+                .foregroundColor(self.color ? Color.green : Color.black)
+                .onTapGesture {
+                    self.color.toggle()
+                }
+            Text(self.text).fixedSize()
+            Text(self.text).fixedSize()
+            Text(self.text).fixedSize()
+        }
+    }
+}

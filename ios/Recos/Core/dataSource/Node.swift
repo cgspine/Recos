@@ -14,7 +14,6 @@ let TYPE_DECL_VAR = 11
 let TYPE_DECL_VAR_LIST = 12
 let TYPE_DECL_VAR_ARRAY_PATTERN = 13
 
-
 let TYPE_EXPR_ARRAY = 100
 let TYPE_EXPR_BINARY = 101
 let TYPE_EXPR_UPDATE = 103
@@ -26,7 +25,7 @@ let TYPE_EXPR_ID = 108
 let TYPE_EXPR_ARRAY_FUNCTION = 109
 let TYPE_EXPR_ASSIGN = 110
 let TYPE_EXPR_EXPRESSION = 111
-
+let TYPE_EXPR_UNARY = 112
 
 let TYPE_STATEMENT_BLOCK = 200
 let TYPE_STATEMENT_FOR = 201
@@ -82,6 +81,10 @@ class Node {
         case TYPE_EXPR_BINARY:
             let binary = BinaryData(json: content)
             self.content = binary
+            break
+        case TYPE_EXPR_UNARY:
+            let unaryData = UnaryData(json: content)
+            self.content = unaryData
             break
         case TYPE_EXPR_UPDATE:
             let updateExpr = UpdateExpr(json: content)
@@ -208,6 +211,10 @@ public struct FunctionDecl {
         self.body = body
         self.params = params
     }
+    
+    func toJsFunctionDecl(scope: JsScope? = nil) -> JsFunctionDecl {
+        return JsFunctionDecl(name: self.name, param: self.params, body: self.body, parentScope: scope, isRecosComponent: true)
+    }
 }
 
 struct FunctionExpr {
@@ -234,12 +241,12 @@ struct FunctionExpr {
         self.params = params
     }
     
-    func toFunctionDecl() -> FunctionDecl {
-        return FunctionDecl(name: "FunctionExpr", isAsync: async, isGenerator: generator, body: body, params: params)
+    func toJsFunctionDecl(scope: JsScope? = nil) -> JsFunctionDecl {
+        return JsFunctionDecl(name: "FunctionExpr", param: self.params, body: self.body, parentScope: scope, isRecosComponent: false)
     }
 }
 
-struct FunctionArrayExpr : Function {
+struct FunctionArrayExpr {
     var params: [Node]
     var body: Node
     
@@ -254,8 +261,8 @@ struct FunctionArrayExpr : Function {
         self.params = params
     }
     
-    func toFunctionDecl() -> FunctionDecl {
-        return FunctionDecl(name: "FunctionArrayExpr", isAsync: false, isGenerator: false, body: body, params: params)
+    func toJsFunctionDecl(scope: JsScope? = nil) -> JsFunctionDecl {
+        return JsFunctionDecl(name: "FunctionArrayExpr", param: self.params, body: self.body, parentScope: scope, isRecosComponent: false)
     }
 }
 
@@ -332,18 +339,32 @@ struct NumLiteral {
 struct BinaryData {
     let left: Node
     let operatorString: String
-    let right: Node
+    let right: Node?
+    
+    init?(json: JSON) {
+
+        let left = Node(json: json["left"])
+        let operatorString = json["operator"].string
+        let right = Node(json: json["right"])
+        
+        self.left = left!
+        self.operatorString = operatorString!
+        self.right = right
+    }
+}
+
+struct UnaryData {
+    let operatorString: String
+    let argument: Node
     
     init?(json: JSON) {
         guard
-            let left = Node(json: json["left"]),
             let operatorString = json["operator"].string,
-            let right = Node(json: json["right"])
+            let argument = Node(json: json["argument"])
             else { return nil }
         
-        self.left = left
         self.operatorString = operatorString
-        self.right = right
+        self.argument = argument
     }
 }
 
@@ -474,16 +495,14 @@ struct UpdateExpr {
 }
 
 struct IfStatement {
-    let test: Node
-    let consequent: Node
-    let alternate: Node
+    let test: Node?
+    let consequent: Node?
+    let alternate: Node?
     
     init?(json: JSON) {
-        guard
-            let test = Node(json: json["test"]),
-            let consequent = Node(json: json["consequent"]),
-            let alternate = Node(json: json["alternate"])
-            else { return nil }
+        let test = Node(json: json["test"])
+        let consequent = Node(json: json["consequent"])
+        let alternate = Node(json: json["alternate"])
         
         self.test = test
         self.consequent = consequent

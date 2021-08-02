@@ -11,7 +11,6 @@ import Foundation
 let TAG = "AssetBundleProvider"
 
 class AssetBundleProvider: BundleProvider {
-    
     var bundleSourceDirPath: String? = nil
     var drawableSourceDirPath: String? = nil
     var storageDir: String? = nil
@@ -22,7 +21,6 @@ class AssetBundleProvider: BundleProvider {
     var supportedDrawableSuffixList: [String]? = [".png", ".jpg"]
     
     init() {
-        
     }
     
     private func isBundleCopied(bundle: String) -> Bool {
@@ -48,6 +46,4 @@ class AssetBundleProvider: BundleProvider {
         }
         return ""
     }
-    
-    
 }
