@@ -25,8 +25,11 @@ class JsxRenderElement : RenderElement {
         self.children = children
     }
     
+    func loadMore() {
+        
+    }
+    
     func Render() -> AnyView? {
-        let view : AnyView?
         var style: JsObject?
         
         switch name {
@@ -35,12 +38,21 @@ class JsxRenderElement : RenderElement {
                 if count == 0 {
                     return nil
                 } else {
-                    let list = List {
-                        ForEach(0..<count) { index in
-                            let child = self.props["render"] as? JsFunctionDecl
-                            if (child != nil) {
-                                EvalView(functionDecl: child!, args: [index], evaluator: self.jsEvaluator)
+                    let list = ScrollView {
+                        LazyVStack(alignment: .leading) {
+                            ForEach(0..<count) { index in
+                                let child = self.props["render"] as? JsFunctionDecl
+                                if (child != nil) {
+                                    EvalView(functionDecl: child!, args: [index], evaluator: self.jsEvaluator)
+                                }
                             }
+//                            Button(action: self.loadMore) {
+//                                Text("你好")
+//                            }.onAppear {
+//                                DispatchQueue.global(qos: .background).asyncAfter(deadline: DispatchTime(uptimeNanoseconds: 10)) {
+//
+//                                }
+//                            }
                         }
                     }
                     return AnyView(list)
@@ -56,18 +68,20 @@ class JsxRenderElement : RenderElement {
                         textString.append(String(value as! Float))
                     } else if value is Int {
                         textString.append(String(value as! Int))
-                    } else {
+                    } else if value is String {
                         textString.append(value as! String)
                     }
                 })
                 let functionDecl = (props["onClick"] as? JsFunctionDecl)
-                return createText(style: style ?? JsObject(), functionDecl: functionDecl, textString: textString)
+                let jsStyle = style?.toJsStyle() ?? JsStyle()
+                return createText(style: jsStyle, functionDecl: functionDecl, textString: textString)
             case "Image":
                 style = self.props["style"] as? JsObject
                 let height = style?.getValue(variable: "height") as? Float ?? 0
                 let width = style?.getValue(variable: "width") as? Float ?? 0
-                let url = self.props["source"] as? String
-                return AnyView(EvalImage(url: url ?? "", placeholder: "placeholder", width: CGFloat(width), height: CGFloat(height)))
+                let raidus = style?.getValue(variable: "borderRadius") as? Float ?? 0
+                let url = self.props["src"] as? String
+                return AnyView(EvalImage(url: url ?? "", placeholder: "placeholder", width: CGFloat(width), height: CGFloat(height), borderRadius: CGFloat(raidus)))
             case "Button":
                 style = self.props["style"] as? JsObject
                 var textString = String()
@@ -84,11 +98,38 @@ class JsxRenderElement : RenderElement {
                     }
                 })
                 let functionDecl = (props["onPress"] as? JsFunctionDecl)
-                return createButton(style: style ?? JsObject(), functionDecl: functionDecl, textString: textString)
+                let jsStyle = style?.toJsStyle() ?? JsStyle()
+                return createButton(style: jsStyle, functionDecl: functionDecl, textString: textString)
             case "View":
-                print("View")
-//                RecosFlexBoxView(alignment: .center, spacing: 10, items: <#T##[_]#>, content: <#T##(Int) -> _#>)
-                break
+                style = self.props["style"] as? JsObject
+                var renderItemArray = [JsxRenderElement]()
+                var keys = [String]()
+                if children != nil {
+                    for (index, item) in children!.enumerated() {
+                        if item is JsxRenderElement {
+                            let jsxRenderItem = item as! JsxRenderElement
+                            renderItemArray.append(jsxRenderItem)
+                            var name = String(jsxRenderItem.name)
+                            name.append(String(index))
+                            keys.append(name)
+                        } else if item is JsxValueRenderElement {
+                            let subValue = (item as! JsxValueRenderElement).value
+                            if subValue is JsArray {
+                                let array = subValue as! JsArray
+                                for item in array.list {
+                                    if item is JsxRenderElement {
+                                        let jsxRenderItem = item as! JsxRenderElement
+                                        renderItemArray.append(jsxRenderItem)
+                                        var name = String(jsxRenderItem.name)
+                                        name.append(String(index))
+                                        keys.append(name)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                return AnyView(DefaultFlexBoxView(keys: keys, data: renderItemArray, style: style))
             case "Crossfade":
                 print("Crossfade")
                 let functionDecl = (props["content"] as? JsFunctionDecl)
@@ -99,23 +140,41 @@ class JsxRenderElement : RenderElement {
         return nil
     }
     
-    func createButton(style: JsObject, functionDecl: JsFunctionDecl?, textString: String) -> AnyView {
-        
-        var backgroundColor: UIColor?
-        let backgroundColorValue = style.getValue(variable: "backgroundColor") as? String
-        if (backgroundColorValue != nil) {
-            backgroundColor = UIColor.init(hex: backgroundColorValue!)
-        }
-        
-        var fontColor: UIColor?
-        let fontColorValue = style.getValue(variable: "color")
-        if fontColorValue != nil {
-            fontColor = UIColor.init(hex: fontColorValue as! String)
-        }
-        
-        let width = style.getValue(variable: "width") as? Float ?? 0
-        let height = style.getValue(variable: "height") as? Float ?? 0
-        
+    func createText(style: JsStyle, functionDecl: JsFunctionDecl?, textString: String) -> AnyView {
+        let text = Text(textString)
+            .kerning(style.letterSpacing)
+            .frame(width: style.width, height: style.height, alignment: style.textAlign)
+            .font(style.font)
+            .foregroundColor(style.fontColor)
+            .background(style.backgroundColor)
+            .lineSpacing(style.lineHeight)
+            .padding(style.margin)
+            .padding(.top, style.marginTop)
+            .padding(.bottom, style.marginBottom)
+            .padding(.leading, style.marginLeft)
+            .padding(.trailing, style.marginRight)
+            .onTapGesture {
+                print("click text")
+                if functionDecl != nil {
+                    functionDecl?.parentScope?.setExtraVarToHeadScope(variable: JsVariable(name: "needUpdate", kind: VariableKind.CONST, value: true))
+                    self.jsEvaluator.normalEval(functionDecl: functionDecl!, args: nil, selfValue: nil)
+                }
+            }
+        //        }.if(paddingHorizontal > 0) { content in
+        //            content.padding(.top, CGFloat(paddingHorizontal)).padding(.bottom, CGFloat(paddingHorizontal))
+        //        }.if(paddingVertical > 0) { content in
+        //            content.padding(.leading, CGFloat(paddingVertical)).padding(.trailing, CGFloat(paddingVertical))
+        //        }.if(borderWidth > 0 || borderRadius > 0) { content in
+        //            content.overlay(
+        //                RoundedRectangle(cornerRadius: CGFloat(borderRadius)).stroke(lineWidth: CGFloat(borderWidth)).if(borderColor != nil) { content in
+        //                    content.foregroundColor(Color(borderColor!))
+        //                }
+        //            )
+        //        }
+        return AnyView(text)
+    }
+    
+    func createButton(style: JsStyle, functionDecl: JsFunctionDecl?, textString: String) -> AnyView {
         let button = Button(action: {
             if (functionDecl != nil) {
                 print("click button")
@@ -124,190 +183,12 @@ class JsxRenderElement : RenderElement {
             }
         }) {
             Text(textString)
-        }.if(height > 0) { content in
-            content.frame(height: CGFloat(height))
-        }.if(width > 0) { content in
-            content.frame(width: CGFloat(width))
-        }.if(backgroundColor != nil) { content in
-            content.background(Color(backgroundColor!))
-        }.if(fontColor != nil) { content in
-            content.foregroundColor(Color(fontColor!))
         }
-        
+        .frame(width: style.width, height: style.height)
+        .background(style.backgroundColor)
+        .foregroundColor(style.fontColor)
+        .font(style.font)
         return AnyView(button)
-    }
-    
-    func createText(style: JsObject, functionDecl: JsFunctionDecl?, textString: String) -> AnyView {
-        var backgroundColor: UIColor?
-        
-        var fontColor: UIColor?
-        var textAlign: Alignment = .leading
-        
-        // TODO
-//        let left = style.getValue(variable: "left") as? Float ?? 0
-//        let right = style.getValue(variable: "right") as? Float ?? 0
-//        let top = style.getValue(variable: "top") as? Float ?? 0
-//        let bottom = style.getValue(variable: "bottom") as? Float ?? 0
-        
-        var borderColor: UIColor?
-        
-        let width = style.getValue(variable: "width") as? Float ?? 0
-        let height = style.getValue(variable: "height") as? Float ?? 0
-        let lineHeight = style.getValue(variable: "lineHeight") as? Float ?? 0
-        let letterSpacing = style.getValue(variable: "letterSpacing") as? Float ?? 0
-        
-        let fontSize = style.getValue(variable: "fontSize") as? Float ?? 0
-        let fontColorValue = style.getValue(variable: "color")
-        if fontColorValue != nil {
-            fontColor = UIColor.init(hex: fontColorValue as! String)
-        }
-        
-        var fontWeight: Font.Weight = .regular
-        let fontWeightValue = style.getValue(variable: "fontWeight") as? String
-        if (fontWeightValue != nil) {
-            switch fontWeightValue! {
-            case "bold":
-                fontWeight = .bold
-            case "light":
-                fontWeight = .light
-            case "medium":
-                fontWeight = .medium
-            case "normal":
-                fontWeight = .regular
-            default:
-                fontWeight = .regular
-            }
-        }
-        
-        let backgroundColorValue = style.getValue(variable: "backgroundColor") as? String
-        if (backgroundColorValue != nil) {
-            backgroundColor = UIColor.init(hex: backgroundColorValue!)
-        }
-        
-        let paddingLeft = style.getValue(variable: "paddingLeft") as? Float ?? 0
-        let paddingRight = style.getValue(variable: "paddingRight") as? Float ?? 0
-        let paddingTop = style.getValue(variable: "paddingTop") as? Float ?? 0
-        let paddingBottom = style.getValue(variable: "paddingBottom") as? Float ?? 0
-        let paddingHorizontal = style.getValue(variable: "paddingHorizontal") as? Float ?? 0
-        let paddingVertical = style.getValue(variable: "paddingVertical") as? Float ?? 0
-        
-        let textAlignValue = style.getValue(variable: "textAlign") as? String
-        if textAlignValue != nil {
-            switch (textAlignValue!) {
-            case "auto":
-                textAlign = .leading
-                break
-            case "center":
-                textAlign = .center
-                break
-            case "right":
-                textAlign = .trailing
-            case "left":
-                textAlign = .leading
-                break
-            default:
-                textAlign = .leading
-            }
-        }
-        
-        // border
-        let borderWidth = style.getValue(variable: "borderWidth") as? Float ?? 0
-        
-        // TODO
-//        let borderTopWidth = style.getValue(variable: "borderTopWidth") as? Float ?? 0
-//        let borderRightWidth = style.getValue(variable: "borderRightWidth") as? Float ?? 0
-//        let borderBottomWidth = style.getValue(variable: "borderBttomWidth") as? Float ?? 0
-//        let borderLeftWidth = style.getValue(variable: "borderLeftWidth") as? Float ?? 0
-        
-        let borderRadius = style.getValue(variable: "borderRadius") as? Float ?? 0
-        
-        let borderColorValue = style.getValue(variable: "borderColor") as? String
-        if borderColorValue != nil {
-            borderColor = UIColor.init(hex: borderColorValue!)
-        }
-        
-        // TODO
-//        let borderTopRadius = style.getValue(variable: "borderTopRadius") as? Float ?? 0
-//        let borderRightRadius = style.getValue(variable: "borderRightRadius") as? Float ?? 0
-//        let borderBottomRadius = style.getValue(variable: "borderBottomRadius") as? Float ?? 0
-//        let borderLeftRadius = style.getValue(variable: "borderLeftRadius") as? Float ?? 0
-//        let borderTopLeftRadius = style.getValue(variable: "borderTopLeftRadius") as? Float ?? 0
-//        let borderTopRightRadius = style.getValue(variable: "borderTopRightRadius") as? Float ?? 0
-//        let borderBottomLeftRadius = style.getValue(variable: "borderBottomLeftRadius") as? Float ?? 0
-//        let borderBottomRightRadius = style.getValue(variable: "borderBottomRightRadius") as? Float ?? 0
-//
-//        var borderTopColor: UIColor?
-//        var borderRightColor: UIColor?
-//        var borderBottomColor: UIColor?
-//        var borderLeftColor: UIColor?
-//
-//        let borderTopColorValue = style.getValue(variable: "borderTopColor") as? String
-//        if borderTopColorValue != nil {
-//            borderTopColor = UIColor.init(hex: borderTopColorValue!)
-//        }
-//
-//        let borderRightColorValue = style.getValue(variable: "borderRightColor") as? String
-//        if borderRightColorValue != nil {
-//            borderRightColor = UIColor.init(hex: borderRightColorValue!)
-//        }
-//
-//        let borderBottomColorValue = style.getValue(variable: "borderBottomColor") as? String
-//        if borderBottomColorValue != nil {
-//            borderBottomColor = UIColor.init(hex: borderBottomColorValue!)
-//        }
-//
-//        let borderLeftColorValue = style.getValue(variable: "borderLeftColor") as? String
-//        if borderLeftColorValue != nil {
-//            borderLeftColor = UIColor.init(hex: borderLeftColorValue!)
-//        }
-//
-//        var shadowColor: UIColor?
-//        let shadowColorValue = style.getValue(variable: "shadowColor") as? String
-//        if shadowColorValue != nil {
-//            shadowColor = UIColor.init(hex: shadowColorValue!)
-//        }
-        
-        let text = Text(textString).kerning(CGFloat(letterSpacing)).frame(width: nil, height: nil, alignment: textAlign)
-            
-        .if(height > 0) { content in
-            content.frame(height: CGFloat(height))
-        }.if(width > 0) { content in
-            content.frame(width: CGFloat(width))
-        }.if(functionDecl != nil) { content in
-            content.onTapGesture {
-                print("click text")
-                functionDecl?.parentScope?.setExtraVarToHeadScope(variable: JsVariable(name: "needUpdate", kind: VariableKind.CONST, value: true))
-                self.jsEvaluator.normalEval(functionDecl: functionDecl!, args: nil, selfValue: nil)
-            }
-        }.if(fontSize > 0) { content in
-            let font = Font.system(size: CGFloat(fontSize), weight: fontWeight)
-            content.font(font)
-        }.if(fontColor != nil) { content in
-            content.foregroundColor(Color.init(fontColor!))
-        }.if(backgroundColor != nil) { content in
-            content.background(Color(backgroundColor!))
-        }.if(lineHeight > 0) { content in
-            content.lineSpacing(CGFloat(lineHeight))
-        }.if(paddingLeft > 0) { content in
-            content.padding(.leading, CGFloat(paddingLeft))
-        }.if(paddingRight > 0) { content in
-            content.padding(.trailing, CGFloat(paddingRight))
-        }.if(paddingTop > 0) { content in
-            content.padding(.top, CGFloat(paddingTop))
-        }.if(paddingBottom > 0) { content in
-            content.padding(.bottom, CGFloat(paddingBottom))
-        }.if(paddingHorizontal > 0) { content in
-            content.padding(.top, CGFloat(paddingHorizontal)).padding(.bottom, CGFloat(paddingHorizontal))
-        }.if(paddingVertical > 0) { content in
-            content.padding(.leading, CGFloat(paddingVertical)).padding(.trailing, CGFloat(paddingVertical))
-        }.if(borderWidth > 0 || borderRadius > 0) { content in
-            content.overlay(
-                RoundedRectangle(cornerRadius: CGFloat(borderRadius)).stroke(lineWidth: CGFloat(borderWidth)).if(borderColor != nil) { content in
-                    content.foregroundColor(Color(borderColor!))
-                }
-            )
-        }
-        return AnyView(text)
     }
 }
 
@@ -323,7 +204,7 @@ class JsxValueRenderElement : RenderElement {
             return (value as! JsxRenderElement).Render()
         } else if value is JsArray {
             let jsArray = value as! JsArray
-            for (index, item) in jsArray.list.enumerated() {
+            for (index, _) in jsArray.list.enumerated() {
                 (jsArray.get(index: index) as? JsxRenderElement)?.Render()
             }
         }

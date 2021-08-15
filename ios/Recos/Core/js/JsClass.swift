@@ -6,11 +6,45 @@
 //
 
 import Foundation
+import SwiftUI
+import UIKit
 
 enum VariableKind: String {
     case LET = "let"
     case CONST = "const"
     case VAR = "var"
+}
+
+struct JsStyle {
+    
+    var backgroundColor: Color = .clear
+    
+    var textAlign: Alignment = .leading
+    var borderColor: Color = .clear
+    var width: CGFloat? = nil
+    var height: CGFloat? = nil
+    var lineHeight: CGFloat = 0
+    var letterSpacing: CGFloat = 0
+    
+    var margin: CGFloat = 0
+    var marginLeft: CGFloat = 0
+    var marginRight: CGFloat = 0
+    var marginTop: CGFloat = 0
+    var marginBottom: CGFloat = 0
+    
+    var borderRadius: CGFloat = 0
+    
+    var fontSize: CGFloat = 14
+    var fontWeight: Font.Weight = .regular
+    var font: Font = Font.system(size: 14)
+    var fontColor: Color = .black
+    
+    var borderTopColor: Color = .clear
+    var borderRightColor: Color = .clear
+    var borderBottomColor: Color = .clear
+    var borderLeftColor: Color = .clear
+    
+    var shadowColor: Color = .clear
 }
 
 class JsStackFrame {
@@ -174,6 +208,88 @@ class JsObject: MemberProvider {
         }
         return memberInvoker
     }
+    
+    func toJsStyle() -> JsStyle {
+        var jsStyle = JsStyle()
+
+        let width = CGFloat(self.getValue(variable: "width") as? Float ?? 0)
+        let height = CGFloat(self.getValue(variable: "height") as? Float ?? 0)
+        jsStyle.width = width == 0 ? nil : width
+        jsStyle.height = height == 0 ? nil : height
+        jsStyle.lineHeight = CGFloat(self.getValue(variable: "lineHeight") as? Float ?? 0)
+        jsStyle.letterSpacing = CGFloat(self.getValue(variable: "letterSpacing") as? Float ?? 0)
+        
+        jsStyle.margin = CGFloat(self.getValue(variable: "margin") as? Float ?? 0)
+        jsStyle.marginLeft = CGFloat(self.getValue(variable: "marginLeft") as? Float ?? 0)
+        jsStyle.marginRight = CGFloat(self.getValue(variable: "marginRight") as? Float ?? 0)
+        jsStyle.marginTop = CGFloat(self.getValue(variable: "marginTop") as? Float ?? 0)
+        jsStyle.marginBottom = CGFloat(self.getValue(variable: "marginBottom") as? Float ?? 0)
+        
+        jsStyle.fontSize = CGFloat(self.getValue(variable: "fontSize") as? Float ?? 0)
+        let fontColorValue = self.getValue(variable: "color")
+        if fontColorValue != nil {
+            jsStyle.fontColor = Color(UIColor.init(hex: fontColorValue as! String))
+        }
+        
+        let fontWeightValue = self.getValue(variable: "fontWeight") as? String
+        if (fontWeightValue != nil) {
+            switch fontWeightValue! {
+            case "bold":
+                jsStyle.fontWeight = .bold
+            case "light":
+                jsStyle.fontWeight = .light
+            case "medium":
+                jsStyle.fontWeight = .medium
+            case "normal":
+                jsStyle.fontWeight = .regular
+            default:
+                jsStyle.fontWeight = .regular
+            }
+        }
+        
+        let font = Font.system(size: jsStyle.fontSize, weight: jsStyle.fontWeight)
+        jsStyle.font = font
+        
+        let backgroundColorValue = self.getValue(variable: "backgroundColor") as? String
+        if (backgroundColorValue != nil) {
+            jsStyle.backgroundColor = Color(UIColor.init(hex: backgroundColorValue!))
+        }
+
+        let borderRadius = self.getValue(variable: "borderRadius") as? Float ?? 0
+        jsStyle.borderRadius = CGFloat(borderRadius)
+        
+        let borderColorValue = self.getValue(variable: "borderColor") as? String
+        if borderColorValue != nil {
+            jsStyle.borderColor = Color(UIColor.init(hex: borderColorValue!))
+        }
+
+        let borderTopColorValue = self.getValue(variable: "borderTopColor") as? String
+        if borderTopColorValue != nil {
+            jsStyle.borderTopColor = Color(UIColor.init(hex: borderTopColorValue!))
+        }
+
+        let borderRightColorValue = self.getValue(variable: "borderRightColor") as? String
+        if borderRightColorValue != nil {
+            jsStyle.borderRightColor = Color(UIColor.init(hex: borderRightColorValue!))
+        }
+
+        let borderBottomColorValue = self.getValue(variable: "borderBottomColor") as? String
+        if borderBottomColorValue != nil {
+            jsStyle.borderBottomColor = Color(UIColor.init(hex: borderBottomColorValue!))
+        }
+
+        let borderLeftColorValue = self.getValue(variable: "borderLeftColor") as? String
+        if borderLeftColorValue != nil {
+            jsStyle.borderLeftColor = Color(UIColor.init(hex: borderLeftColorValue!))
+        }
+
+        let shadowColorValue = self.getValue(variable: "shadowColor") as? String
+        if shadowColorValue != nil {
+            jsStyle.shadowColor = Color(UIColor.init(hex: shadowColorValue!))
+        }
+        
+        return jsStyle
+    }
 }
 
 typealias completionHandler = (_ args: [Any?]?) -> (Any?)
@@ -201,9 +317,9 @@ class JsArray: MemberProvider {
         case "length":
             return list.count
         default:
-            let index: Int = Int(name)!
+            let index: Int = Int(name) ?? 0
             if index < list.count {
-                return list[Int(name)!]
+                return list[index]
             }
             assert(false, "array out of bounds")
         }

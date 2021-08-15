@@ -240,6 +240,42 @@ class JsEvaluator {
                 let it = getJsValue(obj: parseExprValue(value: item, frame: frame, scope: scope))
                 ret.push(item: it)
             }
+            if ret.list.count > 0 {
+                let execNativeMethodString = ret.get(index: 0) as? String
+                if execNativeMethodString != nil && execNativeMethodString == "ExecNativeMethod" {
+                    let callBackKey = ret.get(index: 1) as? String
+                    let className = ret.get(index: 2) as? String
+                    let methodName = ret.get(index: 3) as? String
+                    if callBackKey != nil && className != nil &&  methodName != nil {
+                        let targetClass: AnyClass = NSClassFromString(className!)!
+                        let selector = NSSelectorFromString(methodName!)
+                        if targetClass is NSObject.Type {
+                            let returnValue = (targetClass as! NSObject.Type).perform(selector).takeUnretainedValue() as? String
+                            if returnValue != nil {
+                                let returnDictionary = self.toDictionary(string: returnValue!)
+                                let dictArray = returnDictionary["result"] as? [[String : Any]]
+                                if dictArray != nil {
+                                    let jsArray = JsArray();
+                                    for itemDict in dictArray! {
+                                        let object = JsObject();
+                                        for (_, item) in itemDict.enumerated() {
+                                            object.setValue(variable: item.key, value: item.value)
+                                        }
+                                        jsArray.push(item: object)
+                                    }
+                                    let callBackVariable = scope.getVar(variable: callBackKey!) as? JsVariable
+                                    if callBackVariable != nil {
+                                        let value = (callBackVariable!).getValue() as? JsFunctionDecl
+                                        if value != nil {
+                                            normalEval(functionDecl: value!, args: [jsArray], selfValue: nil)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             return ret
         }else if(value.type == TYPE_EXPR_BINARY) {
             return binaryCalculate(scope: scope, binaryData: value.content as! BinaryData, frame: frame)
@@ -341,6 +377,17 @@ class JsEvaluator {
             let obj = getJsValue(obj: parseExprValue(value: memberExpr.obj, frame: frame, scope: scope))
             if obj is MemberProvider {
                 return parseMember(obj: obj as! MemberProvider, computed: memberExpr.computed, value: memberExpr.property, scope: scope, frame: frame)
+            } else if obj is JsVariable {
+                let object = obj as! JsVariable
+                let targetArray = JsArray()
+                targetArray.push(item: object)
+                targetArray.memberSetter(name: "0")(object)
+                return parseMember(obj: targetArray, computed: memberExpr.computed, value: memberExpr.property, scope: scope, frame: frame)
+            } else {
+                let targetArray = JsArray()
+                targetArray.push(item: obj)
+                targetArray.memberSetter(name: "0")(obj)
+                return parseMember(obj: targetArray, computed: memberExpr.computed, value: memberExpr.property, scope: scope, frame: frame)
             }
             assert(false, "can not support this type")
             return nil
@@ -562,6 +609,21 @@ class JsEvaluator {
             assert(false, "not support" + binaryData.operatorString)
         }
     }
+    
+    func toDictionary(string: String) -> [String : Any] {
+        var result = [String : Any]()
+        guard !string.isEmpty else { return result }
+        
+        guard let dataSelf = string.data(using: .utf8) else {
+            return result
+        }
+        
+        if let dic = try? JSONSerialization.jsonObject(with: dataSelf,
+                           options: .mutableContainers) as? [String : Any] {
+            result = dic
+        }
+        return result
+    }
 }
 
 struct EvalImage : View {
@@ -569,8 +631,9 @@ struct EvalImage : View {
     
     var url: String
     var placeholder: String
-    var width: CGFloat?
-    var height: CGFloat?
+    var width: CGFloat = 0
+    var height: CGFloat = 0
+    var borderRadius: CGFloat = 0
     
     init(url: String, placeholder: String) {
         self.url = url
@@ -584,10 +647,20 @@ struct EvalImage : View {
         self.height = height
     }
     
+    init(url: String, placeholder: String, width: CGFloat, height: CGFloat, borderRadius: CGFloat) {
+        self.url = url
+        self.placeholder = placeholder
+        self.width = width
+        self.height = height
+        self.borderRadius = borderRadius
+    }
+    
     var body: some View {
         let placeholderOne = UIImage(named: self.placeholder)
         Image(uiImage: self.remoteImage ?? placeholderOne!).resizable()
-            .onAppear(perform: fetchRemoteImage).frame(width: self.width, height: self.height, alignment: .center)
+            .onAppear(perform: fetchRemoteImage)
+            .frame(width: self.width, height: self.height, alignment: .center)
+            .cornerRadius(self.borderRadius)
     }
     
     func fetchRemoteImage() {
@@ -601,10 +674,11 @@ struct EvalImage : View {
             }
         }.resume()
     }
+
 }
     
 struct EvalView : View {
-    var functionDecl: JsFunctionDecl!
+    var functionDecl: JsFunctionDecl?
     @State var args: [Any]?
     @State var evaluator: JsEvaluator
     @ObservedObject var recosObserve = RecosObservedObject()
@@ -625,7 +699,9 @@ struct EvalView : View {
     }
     
     var body : some View {
-        evaluator.EvalWithState(functionDecl: functionDecl, args: args, recosObserveObject: recosObserve)
+        if functionDecl != nil {
+            evaluator.EvalWithState(functionDecl: functionDecl!, args: args, recosObserveObject: recosObserve)
+        }
     }
 }
 

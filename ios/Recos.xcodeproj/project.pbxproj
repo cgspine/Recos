@@ -8,6 +8,15 @@
 
 /* Begin PBXBuildFile section */
 		2006B67526B6DD7200A04735 /* JsConsole.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2006B67426B6DD7200A04735 /* JsConsole.swift */; };
+		2006DE8326C582640030A07A /* CallMethod.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2006DE8226C582640030A07A /* CallMethod.swift */; };
+		2006DEDB26C80AAF0030A07A /* WHSelectFriend.m in Sources */ = {isa = PBXBuildFile; fileRef = 2006DEDA26C80AAF0030A07A /* WHSelectFriend.m */; };
+		2006DEE126C91E5D0030A07A /* selectFriend.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 2006DEE026C91E5D0030A07A /* selectFriend.bundle */; };
+		202808B626BA838E00B6C3F0 /* FlexBoxDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 202808B526BA838E00B6C3F0 /* FlexBoxDataSource.swift */; };
+		202808B826BA83B800B6C3F0 /* DefaultFlexBoxDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 202808B726BA83B800B6C3F0 /* DefaultFlexBoxDataSource.swift */; };
+		202808E626C2D42300B6C3F0 /* CustomFlexBoxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 202808E526C2D42300B6C3F0 /* CustomFlexBoxView.swift */; };
+		202808EC26C2E87B00B6C3F0 /* waterfall.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 202808EB26C2E87B00B6C3F0 /* waterfall.bundle */; };
+		202808EF26C3D7DF00B6C3F0 /* alignment-guides-tool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 202808EE26C3D7DE00B6C3F0 /* alignment-guides-tool.swift */; };
+		202808F126C3DA6700B6C3F0 /* css_style.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 202808F026C3DA6600B6C3F0 /* css_style.bundle */; };
 		209245C7269229AD00C0DF61 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 209245C6269229AD00C0DF61 /* AppDelegate.swift */; };
 		209245C9269229AD00C0DF61 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 209245C8269229AD00C0DF61 /* SceneDelegate.swift */; };
 		209245CD269229B000C0DF61 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 209245CC269229B000C0DF61 /* Assets.xcassets */; };
@@ -25,13 +34,10 @@
 		2095EAB5269D9474003F982C /* placeholder.png in Resources */ = {isa = PBXBuildFile; fileRef = 2095EAB4269D9474003F982C /* placeholder.png */; };
 		2095EAB8269D9779003F982C /* differentHeight.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 2095EAB6269D9779003F982C /* differentHeight.bundle */; };
 		2095EABB269D97AA003F982C /* hello.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 2095EABA269D97AA003F982C /* hello.bundle */; };
-		2095EABD269EC98C003F982C /* css_style.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 2095EABC269EC98C003F982C /* css_style.bundle */; };
 		20CDD9CE26A85B4F00EE73FD /* JsClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20CDD9CD26A85B4F00EE73FD /* JsClass.swift */; };
 		20CDD9D126A85E6E00EE73FD /* RecosExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20CDD9D026A85E6E00EE73FD /* RecosExtension.swift */; };
 		20D305F926AEE8BD005EC73F /* RenderElement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20D305F826AEE8BD005EC73F /* RenderElement.swift */; };
 		20D3062726B2F0C7005EC73F /* JsMethod.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20D3062626B2F0C7005EC73F /* JsMethod.swift */; };
-		20E64C8B26AE5E300002C890 /* waterfall.tsx in Resources */ = {isa = PBXBuildFile; fileRef = 20E64C8926AE5E300002C890 /* waterfall.tsx */; };
-		20E64C8C26AE5E300002C890 /* waterfall.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 20E64C8A26AE5E300002C890 /* waterfall.bundle */; };
 		20F5BEF4269C44BE006DDA1D /* differentHeight.tsx in Resources */ = {isa = PBXBuildFile; fileRef = 20F5BEF2269C44BE006DDA1D /* differentHeight.tsx */; };
 		20F5BEF8269C6C23006DDA1D /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20F5BEF7269C6C22006DDA1D /* ContentView.swift */; };
 		532982EAC114539BA33A9E3B /* Pods_Recos.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EF279DA44200C7FDD1CFFA77 /* Pods_Recos.framework */; };
@@ -39,6 +45,17 @@
 
 /* Begin PBXFileReference section */
 		2006B67426B6DD7200A04735 /* JsConsole.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JsConsole.swift; sourceTree = "<group>"; };
+		2006DE8226C582640030A07A /* CallMethod.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CallMethod.swift; sourceTree = "<group>"; };
+		2006DED826C80AAE0030A07A /* Recos-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Recos-Bridging-Header.h"; sourceTree = "<group>"; };
+		2006DED926C80AAF0030A07A /* WHSelectFriend.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WHSelectFriend.h; sourceTree = "<group>"; };
+		2006DEDA26C80AAF0030A07A /* WHSelectFriend.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = WHSelectFriend.m; sourceTree = "<group>"; };
+		2006DEE026C91E5D0030A07A /* selectFriend.bundle */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = selectFriend.bundle; sourceTree = "<group>"; };
+		202808B526BA838E00B6C3F0 /* FlexBoxDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlexBoxDataSource.swift; sourceTree = "<group>"; };
+		202808B726BA83B800B6C3F0 /* DefaultFlexBoxDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultFlexBoxDataSource.swift; sourceTree = "<group>"; };
+		202808E526C2D42300B6C3F0 /* CustomFlexBoxView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomFlexBoxView.swift; sourceTree = "<group>"; };
+		202808EB26C2E87B00B6C3F0 /* waterfall.bundle */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = waterfall.bundle; sourceTree = "<group>"; };
+		202808EE26C3D7DE00B6C3F0 /* alignment-guides-tool.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "alignment-guides-tool.swift"; sourceTree = "<group>"; };
+		202808F026C3DA6600B6C3F0 /* css_style.bundle */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = css_style.bundle; sourceTree = "<group>"; };
 		209245C3269229AD00C0DF61 /* Recos.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Recos.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		209245C6269229AD00C0DF61 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		209245C8269229AD00C0DF61 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -58,13 +75,10 @@
 		2095EAB4269D9474003F982C /* placeholder.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = placeholder.png; sourceTree = "<group>"; };
 		2095EAB6269D9779003F982C /* differentHeight.bundle */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = differentHeight.bundle; sourceTree = "<group>"; };
 		2095EABA269D97AA003F982C /* hello.bundle */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = hello.bundle; sourceTree = "<group>"; };
-		2095EABC269EC98C003F982C /* css_style.bundle */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = css_style.bundle; path = ../../../js/test/css_style.bundle; sourceTree = "<group>"; };
 		20CDD9CD26A85B4F00EE73FD /* JsClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JsClass.swift; sourceTree = "<group>"; };
 		20CDD9D026A85E6E00EE73FD /* RecosExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecosExtension.swift; sourceTree = "<group>"; };
 		20D305F826AEE8BD005EC73F /* RenderElement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenderElement.swift; sourceTree = "<group>"; };
 		20D3062626B2F0C7005EC73F /* JsMethod.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JsMethod.swift; sourceTree = "<group>"; };
-		20E64C8926AE5E300002C890 /* waterfall.tsx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = waterfall.tsx; path = ../../../js/test/waterfall.tsx; sourceTree = "<group>"; };
-		20E64C8A26AE5E300002C890 /* waterfall.bundle */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = waterfall.bundle; path = ../../../js/test/waterfall.bundle; sourceTree = "<group>"; };
 		20F5BEF2269C44BE006DDA1D /* differentHeight.tsx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = differentHeight.tsx; sourceTree = "<group>"; };
 		20F5BEF7269C6C22006DDA1D /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		4E312AEDCC1A12D8E1930DE6 /* Pods-Recos.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Recos.debug.xcconfig"; path = "Target Support Files/Pods-Recos/Pods-Recos.debug.xcconfig"; sourceTree = "<group>"; };
@@ -123,6 +137,11 @@
 				209245D4269229B000C0DF61 /* Info.plist */,
 				209245CE269229B000C0DF61 /* Preview Content */,
 				20F5BEF7269C6C22006DDA1D /* ContentView.swift */,
+				202808EE26C3D7DE00B6C3F0 /* alignment-guides-tool.swift */,
+				2006DE8226C582640030A07A /* CallMethod.swift */,
+				2006DED926C80AAF0030A07A /* WHSelectFriend.h */,
+				2006DEDA26C80AAF0030A07A /* WHSelectFriend.m */,
+				2006DED826C80AAE0030A07A /* Recos-Bridging-Header.h */,
 			);
 			path = Recos;
 			sourceTree = "<group>";
@@ -152,6 +171,9 @@
 			isa = PBXGroup;
 			children = (
 				209245DE26922A2A00C0DF61 /* FlexBox.swift */,
+				202808B526BA838E00B6C3F0 /* FlexBoxDataSource.swift */,
+				202808B726BA83B800B6C3F0 /* DefaultFlexBoxDataSource.swift */,
+				202808E526C2D42300B6C3F0 /* CustomFlexBoxView.swift */,
 			);
 			path = widget;
 			sourceTree = "<group>";
@@ -179,10 +201,10 @@
 		209245EE26922A7800C0DF61 /* Assets */ = {
 			isa = PBXGroup;
 			children = (
+				2006DEE026C91E5D0030A07A /* selectFriend.bundle */,
+				202808F026C3DA6600B6C3F0 /* css_style.bundle */,
+				202808EB26C2E87B00B6C3F0 /* waterfall.bundle */,
 				2095EAB3269D9437003F982C /* img */,
-				20E64C8A26AE5E300002C890 /* waterfall.bundle */,
-				20E64C8926AE5E300002C890 /* waterfall.tsx */,
-				2095EABC269EC98C003F982C /* css_style.bundle */,
 				2095EAB1269D8D87003F982C /* image.bundle */,
 				20F5BEF2269C44BE006DDA1D /* differentHeight.tsx */,
 				2095EAB6269D9779003F982C /* differentHeight.bundle */,
@@ -259,6 +281,7 @@
 				TargetAttributes = {
 					209245C2269229AD00C0DF61 = {
 						CreatedOnToolsVersion = 12.5;
+						LastSwiftMigration = 1250;
 					};
 				};
 			};
@@ -287,16 +310,16 @@
 			files = (
 				2095EABB269D97AA003F982C /* hello.bundle in Resources */,
 				209245D3269229B000C0DF61 /* LaunchScreen.storyboard in Resources */,
-				20E64C8C26AE5E300002C890 /* waterfall.bundle in Resources */,
+				202808EC26C2E87B00B6C3F0 /* waterfall.bundle in Resources */,
 				20F5BEF4269C44BE006DDA1D /* differentHeight.tsx in Resources */,
-				20E64C8B26AE5E300002C890 /* waterfall.tsx in Resources */,
 				2095EAB8269D9779003F982C /* differentHeight.bundle in Resources */,
 				209245D0269229B000C0DF61 /* Preview Assets.xcassets in Resources */,
 				2095EAB5269D9474003F982C /* placeholder.png in Resources */,
+				202808F126C3DA6700B6C3F0 /* css_style.bundle in Resources */,
 				2092461426922A7800C0DF61 /* hello.tsx in Resources */,
-				2095EABD269EC98C003F982C /* css_style.bundle in Resources */,
 				209245CD269229B000C0DF61 /* Assets.xcassets in Resources */,
 				2095EAB2269D8D87003F982C /* image.bundle in Resources */,
+				2006DEE126C91E5D0030A07A /* selectFriend.bundle in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -349,18 +372,24 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				202808E626C2D42300B6C3F0 /* CustomFlexBoxView.swift in Sources */,
 				209245E926922A2A00C0DF61 /* DefaultRecosDataSource.swift in Sources */,
 				209245EA26922A2A00C0DF61 /* RecosDataSource.swift in Sources */,
 				209245E826922A2A00C0DF61 /* FlexBox.swift in Sources */,
+				2006DEDB26C80AAF0030A07A /* WHSelectFriend.m in Sources */,
 				209245C7269229AD00C0DF61 /* AppDelegate.swift in Sources */,
 				209245EC26922A2A00C0DF61 /* BundleProvider.swift in Sources */,
+				202808B626BA838E00B6C3F0 /* FlexBoxDataSource.swift in Sources */,
 				20D305F926AEE8BD005EC73F /* RenderElement.swift in Sources */,
+				202808EF26C3D7DF00B6C3F0 /* alignment-guides-tool.swift in Sources */,
 				20CDD9CE26A85B4F00EE73FD /* JsClass.swift in Sources */,
 				20D3062726B2F0C7005EC73F /* JsMethod.swift in Sources */,
 				2006B67526B6DD7200A04735 /* JsConsole.swift in Sources */,
 				209245C9269229AD00C0DF61 /* SceneDelegate.swift in Sources */,
+				202808B826BA83B800B6C3F0 /* DefaultFlexBoxDataSource.swift in Sources */,
 				20F5BEF8269C6C23006DDA1D /* ContentView.swift in Sources */,
 				20CDD9D126A85E6E00EE73FD /* RecosExtension.swift in Sources */,
+				2006DE8326C582640030A07A /* CallMethod.swift in Sources */,
 				209245ED26922A2A00C0DF61 /* AssetBundleProvider.swift in Sources */,
 				209245E726922A2A00C0DF61 /* JsEvaluator.swift in Sources */,
 				209245EB26922A2A00C0DF61 /* Node.swift in Sources */,
@@ -503,6 +532,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"Recos/Preview Content\"";
 				DEVELOPMENT_TEAM = JGZKPAYJ7R;
@@ -514,6 +544,8 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.tigerAndBull.Recos;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "Recos/Recos-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -525,6 +557,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"Recos/Preview Content\"";
 				DEVELOPMENT_TEAM = JGZKPAYJ7R;
@@ -536,6 +569,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.tigerAndBull.Recos;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "Recos/Recos-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

@@ -65,8 +65,10 @@ class Node {
         case TYPE_DECL_VAR_LIST:
             var nodes = [Node]()
             for (_, item):(String, JSON) in content {
-                let node = Node(json: item)!
-                nodes.append(node)
+                let node = Node(json: item)
+                if node != nil {
+                    nodes.append(node!)
+                }
             }
             self.content = nodes
             break
@@ -526,8 +528,10 @@ struct JsxElement {
         
         var children = [Node]()
         for (_, item):(String, JSON) in json["children"] {
-            let node = Node(json: item)!
-            children.append(node)
+            let node = Node(json: item)
+            if node != nil {
+                children.append(node!)
+            }
         }
         
         self.name = name!
