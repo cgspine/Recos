@@ -8,7 +8,23 @@
 import Foundation
 import SwiftUI
 
+/*
+ <VStack
+    name=''
+    width=''
+    data='@data:xx:xx:xx'
+ >
+    
+ </VStack>
+ */
+
 struct ContentView : View {
+    
+    var dataSource = DefaultRecosDataSource()
+    
+    init() {
+        ParseManager.shared.parse(bundleName: "viewTest")
+    }
     
     var body: some View {
         NavigationView {
@@ -37,23 +53,14 @@ struct ContentView : View {
                 NavigationLink(destination: EvalView(bundleName: "selectFriend", moduleName: "SelectFriendLoadView")) {
                     Text("Select Friend")
                 }
-//                NavigationLink(destination: VStack {
-//                    JustifiedContainer(
-//                            ItemView(value: 1329382),
-//                            ItemView(value: 2320392093),
-//                            ItemView(value: 332390232323)
-//                    )
-//                    JustifiedContainer([
-//                            ItemView(value: 1323232),
-//                            ItemView(value: 2323232323245633232),
-//                            ItemView(value: 332),
-//                            ItemView(value: 43232)
-//                    ])
-//                }) {
-//                    Text("JustifiedContainer")
-//                }
                 NavigationLink(destination: TestLazyStack()) {
                     Text("Test")
+                }
+                NavigationLink(destination: NavigationLazyView(TestView().onAppear(perform: testLog))) {
+                    Text("tk view Test")
+                }
+                NavigationLink(destination: TestLogicView().onAppear(perform: testLog)) {
+                    Text("tk logic Test")
                 }
             }
             .listStyle(GroupedListStyle())
@@ -61,6 +68,77 @@ struct ContentView : View {
         }
     }
     
+    func testLog() {
+        print("时间", Date().timeIntervalSince1970)
+        print("时间","=======")
+    }
+    
+}
+
+class ParseManager {
+    
+    static let shared = ParseManager()
+    
+    private init() {}
+    
+    var parseMap: [String : DefaultRecosDataSource] = [:]
+    
+    public func parse(bundleName: String) {
+        let dataSource = DefaultRecosDataSource()
+        dataSource.parse(bundleName: bundleName)
+        self.parseMap[bundleName] = dataSource
+    }
+    
+    public func getDataSouce(bundleName: String) -> DefaultRecosDataSource {
+        return self.parseMap[bundleName] ?? DefaultRecosDataSource()
+    }
+}
+
+struct NavigationLazyView<Content: View>: View {
+    let build: () -> Content
+    init(_ build: @autoclosure @escaping () -> Content) {
+        self.build = build
+    }
+    var body: Content {
+        build()
+    }
+}
+
+struct TestBigView : View {
+
+    var body: some View {
+        TestView()
+        TestView()
+        TestView()
+        TestView()
+        TestView()
+        TestView()
+        TestView()
+        TestView()
+        TestView()
+    }
+}
+
+struct TestView : View {
+    
+    var body: some View {
+        EvalView(dataSource: ParseManager.shared.getDataSouce(bundleName: "viewTest"), moduleName: "Test", logEnable: true)
+        EvalView(dataSource: ParseManager.shared.getDataSouce(bundleName: "viewTest"), moduleName: "Test")
+        EvalView(dataSource: ParseManager.shared.getDataSouce(bundleName: "viewTest"), moduleName: "Test")
+        EvalView(dataSource: ParseManager.shared.getDataSouce(bundleName: "viewTest"), moduleName: "Test")
+        EvalView(dataSource: ParseManager.shared.getDataSouce(bundleName: "viewTest"), moduleName: "Test")
+        EvalView(dataSource: ParseManager.shared.getDataSouce(bundleName: "viewTest"), moduleName: "Test")
+        EvalView(dataSource: ParseManager.shared.getDataSouce(bundleName: "viewTest"), moduleName: "Test")
+    }
+}
+
+struct TestLogicView : View {
+    
+    let myDictionary = ["name": "测试名称", "invalidTimeStamp": 100000000, "pageName": "home_page"] as [String : Any]
+    
+    var body: some View {
+        EvalView(bundleName: "testLogic", moduleName: "Test", entryData: myDictionary)
+    }
 }
 
 struct TestLazyModel {
@@ -107,3 +185,4 @@ struct TestLazyStack : View {
         }
     }
 }
+                 

@@ -11,12 +11,15 @@
 		2006DE8326C582640030A07A /* CallMethod.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2006DE8226C582640030A07A /* CallMethod.swift */; };
 		2006DEDB26C80AAF0030A07A /* WHSelectFriend.m in Sources */ = {isa = PBXBuildFile; fileRef = 2006DEDA26C80AAF0030A07A /* WHSelectFriend.m */; };
 		2006DEE126C91E5D0030A07A /* selectFriend.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 2006DEE026C91E5D0030A07A /* selectFriend.bundle */; };
+		2025CFF629F0287A002BD162 /* JsMath.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2025CFF529F0287A002BD162 /* JsMath.swift */; };
 		202808B626BA838E00B6C3F0 /* FlexBoxDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 202808B526BA838E00B6C3F0 /* FlexBoxDataSource.swift */; };
 		202808B826BA83B800B6C3F0 /* DefaultFlexBoxDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 202808B726BA83B800B6C3F0 /* DefaultFlexBoxDataSource.swift */; };
 		202808E626C2D42300B6C3F0 /* CustomFlexBoxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 202808E526C2D42300B6C3F0 /* CustomFlexBoxView.swift */; };
 		202808EC26C2E87B00B6C3F0 /* waterfall.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 202808EB26C2E87B00B6C3F0 /* waterfall.bundle */; };
 		202808EF26C3D7DF00B6C3F0 /* alignment-guides-tool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 202808EE26C3D7DE00B6C3F0 /* alignment-guides-tool.swift */; };
 		202808F126C3DA6700B6C3F0 /* css_style.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 202808F026C3DA6600B6C3F0 /* css_style.bundle */; };
+		208697A829D9B45400ABEA42 /* viewTest.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 208697A729D9B45400ABEA42 /* viewTest.bundle */; };
+		208697AA29D9C19E00ABEA42 /* testLogic.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 208697A929D9C19E00ABEA42 /* testLogic.bundle */; };
 		209245C7269229AD00C0DF61 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 209245C6269229AD00C0DF61 /* AppDelegate.swift */; };
 		209245C9269229AD00C0DF61 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 209245C8269229AD00C0DF61 /* SceneDelegate.swift */; };
 		209245CD269229B000C0DF61 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 209245CC269229B000C0DF61 /* Assets.xcassets */; };
@@ -50,12 +53,15 @@
 		2006DED926C80AAF0030A07A /* WHSelectFriend.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WHSelectFriend.h; sourceTree = "<group>"; };
 		2006DEDA26C80AAF0030A07A /* WHSelectFriend.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = WHSelectFriend.m; sourceTree = "<group>"; };
 		2006DEE026C91E5D0030A07A /* selectFriend.bundle */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = selectFriend.bundle; sourceTree = "<group>"; };
+		2025CFF529F0287A002BD162 /* JsMath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JsMath.swift; sourceTree = "<group>"; };
 		202808B526BA838E00B6C3F0 /* FlexBoxDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlexBoxDataSource.swift; sourceTree = "<group>"; };
 		202808B726BA83B800B6C3F0 /* DefaultFlexBoxDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultFlexBoxDataSource.swift; sourceTree = "<group>"; };
 		202808E526C2D42300B6C3F0 /* CustomFlexBoxView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomFlexBoxView.swift; sourceTree = "<group>"; };
 		202808EB26C2E87B00B6C3F0 /* waterfall.bundle */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = waterfall.bundle; sourceTree = "<group>"; };
 		202808EE26C3D7DE00B6C3F0 /* alignment-guides-tool.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "alignment-guides-tool.swift"; sourceTree = "<group>"; };
 		202808F026C3DA6600B6C3F0 /* css_style.bundle */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = css_style.bundle; sourceTree = "<group>"; };
+		208697A729D9B45400ABEA42 /* viewTest.bundle */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = viewTest.bundle; sourceTree = "<group>"; };
+		208697A929D9C19E00ABEA42 /* testLogic.bundle */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = testLogic.bundle; sourceTree = "<group>"; };
 		209245C3269229AD00C0DF61 /* Recos.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Recos.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		209245C6269229AD00C0DF61 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		209245C8269229AD00C0DF61 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -201,6 +207,8 @@
 		209245EE26922A7800C0DF61 /* Assets */ = {
 			isa = PBXGroup;
 			children = (
+				208697A929D9C19E00ABEA42 /* testLogic.bundle */,
+				208697A729D9B45400ABEA42 /* viewTest.bundle */,
 				2006DEE026C91E5D0030A07A /* selectFriend.bundle */,
 				202808F026C3DA6600B6C3F0 /* css_style.bundle */,
 				202808EB26C2E87B00B6C3F0 /* waterfall.bundle */,
@@ -228,6 +236,7 @@
 				20CDD9CD26A85B4F00EE73FD /* JsClass.swift */,
 				20D3062626B2F0C7005EC73F /* JsMethod.swift */,
 				2006B67426B6DD7200A04735 /* JsConsole.swift */,
+				2025CFF529F0287A002BD162 /* JsMath.swift */,
 			);
 			path = js;
 			sourceTree = "<group>";
@@ -316,7 +325,9 @@
 				209245D0269229B000C0DF61 /* Preview Assets.xcassets in Resources */,
 				2095EAB5269D9474003F982C /* placeholder.png in Resources */,
 				202808F126C3DA6700B6C3F0 /* css_style.bundle in Resources */,
+				208697A829D9B45400ABEA42 /* viewTest.bundle in Resources */,
 				2092461426922A7800C0DF61 /* hello.tsx in Resources */,
+				208697AA29D9C19E00ABEA42 /* testLogic.bundle in Resources */,
 				209245CD269229B000C0DF61 /* Assets.xcassets in Resources */,
 				2095EAB2269D8D87003F982C /* image.bundle in Resources */,
 				2006DEE126C91E5D0030A07A /* selectFriend.bundle in Resources */,
@@ -390,6 +401,7 @@
 				20F5BEF8269C6C23006DDA1D /* ContentView.swift in Sources */,
 				20CDD9D126A85E6E00EE73FD /* RecosExtension.swift in Sources */,
 				2006DE8326C582640030A07A /* CallMethod.swift in Sources */,
+				2025CFF629F0287A002BD162 /* JsMath.swift in Sources */,
 				209245ED26922A2A00C0DF61 /* AssetBundleProvider.swift in Sources */,
 				209245E726922A2A00C0DF61 /* JsEvaluator.swift in Sources */,
 				209245EB26922A2A00C0DF61 /* Node.swift in Sources */,

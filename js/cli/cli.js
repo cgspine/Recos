@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 // node cli.js -s ./test/hello.tsx -o ./test/hello.bundle
+// node .cli.js -s ./
 
 const fs = require('fs')
 const path = require('path')
@@ -22,8 +23,9 @@ let options = getopts(process.argv.slice(2), {
         help: false,
     }
 })
-// console.log('cli options: ', options)
+console.log('cli options: ', options)
 const { source, output, help } = options
+console.log('source: ', source)
 if (help) {
     return
 }
@@ -41,15 +43,23 @@ function parseFile(sourcePath) {
     return parse(sourceContent.program.body)
 }
 
-
+let content = fs.readFileSync('/Users/anwenhu/Desktop/MineProject/Recos/js/test/src/testLogic/index.tsx', 'utf8')
+    let sourceContent = babelParser.parse(content, {
+        sourceType: "module",
+        plugins: [
+            "jsx",
+            "typescript",
+        ]
+    })
 let ret = parse(sourceContent.program.body)
-console.log(JSON.stringify(sourceContent.program.body))
+console.log(JSON.stringify(ret))
 fs.writeFileSync(output, JSON.stringify(ret))
 
 function parse(input){
     if(input == null){
         return null
     }
+    
     if(Array.isArray(input)){
         let ret = Array(input.length)
         for(let i = 0; i < input.length; i++){

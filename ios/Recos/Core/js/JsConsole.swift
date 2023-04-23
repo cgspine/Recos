@@ -11,7 +11,13 @@ class JsConsole : MemberProvider {
     func getMemeber(name: String) -> Any? {
         if name == "log" {
             return NativeMemberInvoker { args in
-                print((args?[0]! as? String ?? "", args?[1]! as? String ?? ""))
+                for arg in (args ?? []) as Array  {
+                    if let arg = arg {
+                        print(arg)
+                    }
+                }
+                // todo 临时写
+                print("引擎日志", (args?[0]! as? String ?? ""), Date().timeIntervalSince1970)
                 return nil
             }
         }

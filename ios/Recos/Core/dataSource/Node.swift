@@ -215,6 +215,21 @@ public struct FunctionDecl {
     }
     
     func toJsFunctionDecl(scope: JsScope? = nil) -> JsFunctionDecl {
+        return JsFunctionDecl(name: self.name, param: self.params, body: self.body, parentScope: scope, isRecosComponent: false)
+    }
+    
+    func toJsFunctionDeclForEntryFunc(scope: JsScope? = nil, data: [String : Any]? = nil) -> JsFunctionDecl {
+        if !self.params.isEmpty {
+            let node = self.params[0]
+            if node.type == TYPE_EXPR_ID {
+                let content = node.content as! IdInfo
+                let object = JsObject()
+                data?.forEach({ (key: String, value: Any) in
+                    object.setValue(variable: key, value: value)
+                })
+                scope?.addVar(variable: JsVariable(name: content.name, kind: VariableKind.VAR, value: object))
+            }
+        }
         return JsFunctionDecl(name: self.name, param: self.params, body: self.body, parentScope: scope, isRecosComponent: true)
     }
 }
@@ -324,12 +339,12 @@ struct StringLiteral {
 }
 
 struct NumLiteral {
-    let value: Float
+    let value: Int
     let raw: String
     
     init?(json: JSON) {
         guard
-            let value = json["value"].float,
+            let value = json["value"].int,
             let raw = json["raw"].string
             else { return nil }
         
