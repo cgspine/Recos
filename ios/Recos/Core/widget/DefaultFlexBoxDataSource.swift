@@ -42,6 +42,9 @@ struct DefaultFlexBoxView: View {
     var justifyContent: JustifyContent = .FlexStart
     // 是单行布局还是多行布局
     var flexWrap: FlexWrap = .NoWrap
+    var backgroundColor: Color = .clear
+    var width: CGFloat = 0
+    var height: CGFloat = 0
     
     init(keys: [String], data: [JsxRenderElement], style: JsObject?) {
         self.keys = keys
@@ -78,6 +81,31 @@ struct DefaultFlexBoxView: View {
             flexWrap = self.getFlexWrap(flexWrap: flexWrapString!)
         }
         self.flexWrap = flexWrap
+        
+        let backgroundColorString = self.style?.getValue(variable: "backgroundColor") as? String
+        if let backgroundColorString = backgroundColorString {
+            self.backgroundColor = Color(UIColor.init(hex: backgroundColorString))
+        }
+        
+        let width = self.style?.getValue(variable: "width") as? Int
+        if width ?? 0 > 0 {
+            self.width = CGFloat(width ?? 0)
+        } else {
+            let width = self.style?.getValue(variable: "width") as? Float
+            if width ?? 0 > 0 {
+                self.width = CGFloat(width ?? 0)
+            }
+        }
+        
+        let height = self.style?.getValue(variable: "height") as? Int
+        if height ?? 0 > 0 {
+            self.height = CGFloat(height ?? 0)
+        } else {
+            let height = self.style?.getValue(variable: "height") as? Float
+            if height ?? 0 > 0 {
+                self.height = CGFloat(height ?? 0)
+            }
+        }
     }
     
     var body: some View {
@@ -89,7 +117,8 @@ struct DefaultFlexBoxView: View {
                          items: self.keys,
                          content: self.getAnyView(index:))
             .padding(self.paddingValue)
-//            .background(Color.red)
+            .frame(width: self.width, height: self.height)
+            .background(self.backgroundColor)
     }
     
     func getFlexDirection(direction: String) -> FlexDirection {

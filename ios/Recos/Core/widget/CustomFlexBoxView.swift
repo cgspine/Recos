@@ -144,7 +144,7 @@ struct CustomFlexBoxView<Item, Content> : View where Item: Hashable, Content: Vi
             rowWidth = 0
             rowItems = []
         }
-        print(rows)
+//        print(rows)
         return rows
     }
 }

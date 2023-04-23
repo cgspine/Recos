@@ -200,7 +200,17 @@ class JsEvaluator {
                 let ifStatement = node.content as! IfStatement
                 let ifScope = JsScope(parentScope: scope)
                 if ifStatement.test != nil {
-                    if getJsValue(obj: parseExprValue(value: ifStatement.test!, frame: frame, scope: ifScope)) as? Bool == true {
+                    let obj = parseExprValue(value: ifStatement.test!, frame: frame, scope: ifScope)
+                    let jsValue = getJsValue(obj: obj)
+                    // todo
+                    // if (model) {} 的逻辑解析是否符合预期
+                    //
+                    if (ifStatement.test?.type == TYPE_EXPR_ID && ifStatement.alternate == nil) {
+                        if ((jsValue) != nil) {
+                            runNode(frame: frame, scope: ifScope, node: ifStatement.consequent!)
+                        }
+                    }
+                    if jsValue as? Bool == true {
                         runNode(frame: frame, scope: ifScope, node: ifStatement.consequent!)
                     } else {
                         if ifStatement.alternate != nil {
@@ -286,6 +296,8 @@ class JsEvaluator {
             switch name {
             case "console":
                 return JsConsole()
+            case "Math":
+                return JsMath()
             case "useState":
                 let object = NativeMemberInvoker { args in
                     let statusValue = frame.visitAndGetState!(args?[0]!) as [Int : Any]
@@ -334,6 +346,12 @@ class JsEvaluator {
                     if property.key.type == TYPE_EXPR_ID {
                         let idInfo = property.key.content as! IdInfo
                         key = idInfo.name
+                    } else if property.key.type == TYPE_LITERAL_STR {
+                        let stringLiteral = property.key.content as! StringLiteral
+                        key = stringLiteral.value
+                    } else if property.key.type == TYPE_LITERAL_NUM {
+                        let numLiteral = property.key.content as! NumLiteral
+                        key = numLiteral.value
                     }
                 }
                 let pValue = getJsValue(obj: parseExprValue(value: property.value, frame: frame, scope: scope))
@@ -490,14 +508,15 @@ class JsEvaluator {
     func unaryCalculate(scope: JsScope, unaryData: UnaryData, frame: JsStackFrame) -> Any? {
         switch unaryData.operatorString {
         case "!":
-            return ((getJsValue(obj:parseExprValue(value: unaryData.argument, frame: frame, scope: scope)) != nil) != true)
+            let obj = parseExprValue(value: unaryData.argument, frame: frame, scope: scope)
+            return ((getJsValue(obj: obj) != nil) != true)
         default:
             return nil
         }
     }
     
     func binaryCalculate(scope: JsScope, binaryData: BinaryData, frame: JsStackFrame) -> Any? {
-        let leftValue = getJsValue(obj: parseExprValue(value: binaryData.left, frame: frame, scope: scope))
+        var leftValue = getJsValue(obj: parseExprValue(value: binaryData.left, frame: frame, scope: scope))
         var rightValue: Any?
         if binaryData.right != nil {
             rightValue = getJsValue(obj: parseExprValue(value: binaryData.right!, frame: frame, scope: scope))
@@ -507,11 +526,20 @@ class JsEvaluator {
             if leftValue is String && rightValue is String {
                 return (leftValue as! String) + (rightValue as! String)
             } else if leftValue is String {
+                if rightValue == nil {
+                    return (leftValue as! String)
+                }
                 if rightValue is Int {
                     return (leftValue as! String) + String(rightValue as! Int)
                 }
                 return (leftValue as! String) + String(rightValue as! Float)
             } else if rightValue is String {
+                if leftValue == nil {
+                    return (rightValue as! String)
+                }
+                if leftValue is Int {
+                    return String(leftValue as! Int) + (rightValue as! String)
+                }
                 return String(leftValue as! Float) + (rightValue as! String)
             } else {
                 if leftValue is Int {
@@ -522,10 +550,43 @@ class JsEvaluator {
                 return value
             }
         case "-":
+            if leftValue is Int && rightValue is Int {
+                return (leftValue as! Int) - (rightValue as! Int)
+            }
+            if leftValue is Float && rightValue is Int {
+                return leftValue as! Float - Float((rightValue as! Int))
+            }
+            if leftValue is Int && rightValue is Float {
+                return Float((leftValue as! Int)) - (rightValue as! Float)
+            }
             return (leftValue as! Float) - (rightValue as! Float)
         case "*":
+            if (leftValue == nil) {
+                return 0
+            }
+            if leftValue is Int && rightValue is Int {
+                return (leftValue as! Int) * (rightValue as! Int)
+            }
+            if leftValue is Float && rightValue is Int {
+                return leftValue as! Float * Float((rightValue as! Int))
+            }
+            if leftValue is Int && rightValue is Float {
+                return Float((leftValue as! Int)) * (rightValue as! Float)
+            }
             return (leftValue as! Float) * (rightValue as! Float)
         case "/":
+            if rightValue == nil {
+                assert(false, "nan")
+            }
+            if leftValue is Int && rightValue is Int {
+                return (leftValue as! Int) / (rightValue as! Int)
+            }
+            if leftValue is Float && rightValue is Int {
+                return leftValue as! Float / Float((rightValue as! Int))
+            }
+            if leftValue is Int && rightValue is Float {
+                return Float((leftValue as! Int)) / (rightValue as! Float)
+            }
             return (leftValue as! Float) / (rightValue as! Float)
         case "%":
             var left: Int = 0
@@ -547,10 +608,19 @@ class JsEvaluator {
             if leftValue is Float && rightValue is Float {
                 return (leftValue as! Float) > (rightValue as! Float)
             }
+            if leftValue is Float && rightValue is Int {
+                return (leftValue as! Float) > Float((rightValue as! Int))
+            }
+            if leftValue is Int && rightValue is Int {
+                return (leftValue as! Int) > (rightValue as! Int)
+            }
             return Float(leftValue as! Int) > (rightValue as! Float)
         case ">=":
             return (leftValue as! Float) >= (rightValue as! Float)
         case "<":
+            if leftValue == nil {
+                leftValue = 0
+            }
             if leftValue is Float && rightValue is Float {
                 return (leftValue as! Float) < (rightValue as! Float)
             }
@@ -562,8 +632,34 @@ class JsEvaluator {
             }
             return Float(leftValue as! Int) < (rightValue as! Float)
         case "<=":
-            return (leftValue as! Float) <= (rightValue as! Float)
+            if leftValue is Float && rightValue is Float {
+                return (leftValue as! Float) <= (rightValue as! Float)
+            }
+            if leftValue is Float && rightValue is Int {
+                return (leftValue as! Float) <= Float((rightValue as! Int))
+            }
+            if leftValue is Int && rightValue is Float {
+                return Float((leftValue as! Int)) <= (rightValue as! Float)
+            }
+            if leftValue is Int && rightValue is Int {
+                return (leftValue as! Int) <= (rightValue as! Int)
+            }
+            return Float(leftValue as! Int) <= (rightValue as! Float)
         case "==":
+            if leftValue is Int && rightValue is Float {
+                return (leftValue as! Int) == Int(rightValue as! Float)
+            }
+            if leftValue is Int && rightValue is Int {
+                return (leftValue as! Int) == (rightValue as! Int)
+            }
+            if leftValue is Float && rightValue is Int {
+                return Int((leftValue as! Float)) == (rightValue as! Int)
+            }
+            return (leftValue as! Float) == (rightValue as! Float)
+        case "===":
+            if leftValue is String && rightValue is String {
+                return leftValue as! String == rightValue as! String
+            }
             if leftValue is Int && rightValue is Float {
                 return (leftValue as! Int) == Int(rightValue as! Float)
             }
@@ -658,22 +754,22 @@ struct EvalImage : View {
     var body: some View {
         let placeholderOne = UIImage(named: self.placeholder)
         Image(uiImage: self.remoteImage ?? placeholderOne!).resizable()
-            .onAppear(perform: fetchRemoteImage)
+//            .onAppear(perform: fetchRemoteImage)
             .frame(width: self.width, height: self.height, alignment: .center)
             .cornerRadius(self.borderRadius)
     }
     
-    func fetchRemoteImage() {
-        guard let url = URL(string: self.url) else { return }
-        URLSession.shared.dataTask(with: url){ (data, response, error) in
-            if let image = UIImage(data: data!){
-                self.remoteImage = image
-            }
-            else{
-                print(error ?? "image loading error, no error info")
-            }
-        }.resume()
-    }
+//    func fetchRemoteImage() {
+//        guard let url = URL(string: self.url) else { return }
+//        URLSession.shared.dataTask(with: url){ (data, response, error) in
+//            if let image = UIImage(data: data!){
+//                self.remoteImage = image
+//            }
+//            else{
+//                print(error ?? "image loading error, no error info")
+//            }
+//        }.resume()
+//    }
 
 }
     
@@ -683,19 +779,52 @@ struct EvalView : View {
     @State var evaluator: JsEvaluator
     @ObservedObject var recosObserve = RecosObservedObject()
     
-    init(bundleName: String, moduleName: String) {
+    init(bundleName: String, moduleName: String, entryData: [String: Any]? = nil) {
         let defaultRecosDataSource = DefaultRecosDataSource.init()
         defaultRecosDataSource.parse(bundleName: bundleName)
         let function = defaultRecosDataSource.getModel(moduleName: moduleName)
         let jsEvaluator = JsEvaluator(dataSource: defaultRecosDataSource)
         self.evaluator = jsEvaluator
+        self.functionDecl = function?.toJsFunctionDeclForEntryFunc(scope: defaultRecosDataSource.rootScope, data: entryData)
+    }
+    
+    init(bundleName: String, moduleName: String, log: Bool) {
+        let defaultRecosDataSource = DefaultRecosDataSource.init()
+        defaultRecosDataSource.parse(bundleName: bundleName)
+        let function = defaultRecosDataSource.getModel(moduleName: moduleName)
+        let jsEvaluator = JsEvaluator(dataSource: defaultRecosDataSource)
+        self.evaluator = jsEvaluator
+        if log {
+            print("时间", Date().timeIntervalSince1970)
+        }
         self.functionDecl = function?.toJsFunctionDecl(scope: defaultRecosDataSource.rootScope)
+    }
+    
+    init(dataSource: DefaultRecosDataSource, moduleName: String) {
+        let function = dataSource.getModel(moduleName: moduleName)
+        let jsEvaluator = JsEvaluator(dataSource: dataSource)
+        self.evaluator = jsEvaluator
+        self.functionDecl = function?.toJsFunctionDecl(scope: dataSource.rootScope)
+    }
+    
+    init(dataSource: DefaultRecosDataSource, moduleName: String, logEnable: Bool) {
+        let function = dataSource.getModel(moduleName: moduleName)
+        let jsEvaluator = JsEvaluator(dataSource: dataSource)
+        self.evaluator = jsEvaluator
+        if logEnable {
+            print("时间", Date().timeIntervalSince1970)
+        }
+        self.functionDecl = function?.toJsFunctionDecl(scope: dataSource.rootScope)
     }
     
     init(functionDecl: JsFunctionDecl, args: [Any]?, evaluator: JsEvaluator) {
         self.functionDecl = functionDecl
         self.args = args
         self.evaluator = evaluator
+    }
+    
+    func prepareEntryData() {
+        
     }
     
     var body : some View {

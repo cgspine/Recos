@@ -71,7 +71,8 @@ class JsScope {
     }
     
     func getVar(variable: String) -> Any? {
-        if (varList[variable] != nil) {
+        if let value = varList[variable],
+           !(value is NSNull) {
             return varList[variable]
         }
         return parentScope?.getVar(variable: variable)
@@ -159,11 +160,6 @@ protocol MemberProvider {
     func getMemeber(name: String) -> Any?
     func memberSetter(name: String) -> MemberInvoker
 }
-
-//protocol JsMemberProvider {
-//    func getMemberValue(name: Any) -> Any?
-//    func setMemberValue(name: Any, value: Any?)
-//}
 
 class NativeMemberInvoker {
     var myCompletionHandler: (_ args: [Any?]?) -> (Any?)

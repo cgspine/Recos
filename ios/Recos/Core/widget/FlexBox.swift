@@ -161,7 +161,7 @@ struct RecosFlexBoxView<Item, Content> : View where Item: Hashable, Content: Vie
                 GeometryReader { (geo) in
                     Color.clear.onAppear {
                         self.sizeBody = geo.frame(in: .global).size
-                        print(self.sizeBody)
+//                        print(self.sizeBody)
                     }
                 }
             )

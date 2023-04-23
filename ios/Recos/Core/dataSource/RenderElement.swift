@@ -80,7 +80,7 @@ class JsxRenderElement : RenderElement {
                 let height = style?.getValue(variable: "height") as? Float ?? 0
                 let width = style?.getValue(variable: "width") as? Float ?? 0
                 let raidus = style?.getValue(variable: "borderRadius") as? Float ?? 0
-                let url = self.props["src"] as? String
+                let url = self.props["source"] as? String
                 return AnyView(EvalImage(url: url ?? "", placeholder: "placeholder", width: CGFloat(width), height: CGFloat(height), borderRadius: CGFloat(raidus)))
             case "Button":
                 style = self.props["style"] as? JsObject
@@ -154,7 +154,6 @@ class JsxRenderElement : RenderElement {
             .padding(.leading, style.marginLeft)
             .padding(.trailing, style.marginRight)
             .onTapGesture {
-                print("click text")
                 if functionDecl != nil {
                     functionDecl?.parentScope?.setExtraVarToHeadScope(variable: JsVariable(name: "needUpdate", kind: VariableKind.CONST, value: true))
                     self.jsEvaluator.normalEval(functionDecl: functionDecl!, args: nil, selfValue: nil)
